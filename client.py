@@ -40,7 +40,7 @@ class CalendarClient:
         while len(self.replica_addresses) > 0:
             current_leader_server, current_leader_port = self.replica_addresses[0]
             try:
-                self.connection = new_route_guide_pb2_grpc.ChatStub(grpc.insecure_channel(f"{current_leader_server}:{current_leader_port}"))
+                self.connection = new_route_guide_pb2_grpc.CalendarStub(grpc.insecure_channel(f"{current_leader_server}:{current_leader_port}"))
                 response = self.connection.alive_ping(proto.Text(text=IS_ALIVE))
                 if response.text == LEADER_ALIVE:
                     # Send message notifying new server that they're the leader
@@ -52,6 +52,8 @@ class CalendarClient:
                 # If for some reason, it gets here (failure), remove current leader from list of ports
                 self.replica_addresses.pop(0)
             except Exception as e:
+                # TODO REMOVE PRINT LATER
+                print(e)
                 # Remove current leader from list of ports
                 self.replica_addresses.pop(0)
         
@@ -195,7 +197,12 @@ class CalendarClient:
                 self.find_next_leader()
     
 
-        '''Schedules a new event for the user.'''
+    '''Notifies a new event for the user.'''
+    def notify_new_event(self):
+        print("NOT IMPLEMENTED")
+
+    
+    '''Schedules a new event for the user.'''
     def schedule_event(self):
         print("NOT IMPLEMENTED")
     

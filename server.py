@@ -358,6 +358,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         return proto.Text(text=LOGOUT_SUCCESSFUL)
     
+    '''Notifies a new event for the user.'''
+    def notify_new_event(self):
+        print("NOT IMPLEMENTED")
+    
 
     '''Schedules a new event for the user.'''
     def schedule_event(self, request, context):
@@ -392,11 +396,11 @@ class ServerRunner:
         self.port = port
 
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        self.chat_servicer = ChatServicer(self.port, logfile=logfile)
+        self.calendar_servicer = CalendarServicer(self.port, logfile=logfile)
     
     """Function for starting server."""
     def start(self):
-        proto_grpc.add_ChatServicer_to_server(self.chat_servicer, self.server)
+        proto_grpc.add_CalendarServicer_to_server(self.calendar_servicer, self.server)
         self.server.add_insecure_port(f"[::]:{self.port}")
         self.server.start()
 
@@ -406,7 +410,7 @@ class ServerRunner:
     
     """Function for connecting to replicas."""
     def connect_to_replicas(self, port1, port2):
-        self.chat_servicer.connect_to_replicas(port1, port2)
+        self.calendar_servicer.connect_to_replicas(port1, port2)
 
     """Function for stopping server."""
     def stop(self):
