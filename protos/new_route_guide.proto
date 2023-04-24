@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.routeguide";
+option java_outer_classname = "RouteGuideProto";
+option objc_class_prefix = "RTG";
+
+package routeguide;
+
+service Calendar {
+    rpc login_user(Text) returns (Text) {}
+    rpc register_user(Text) returns (Text) {}
+
+    rpc display_accounts(Text) returns (stream Text) {}
+    rpc check_user_exists(Text) returns (Text) {}
+
+    rpc delete_account(Text) returns (Text) {}
+    rpc logout(Text) returns (Text) {}
+
+    rpc notify_new_event(Text) returns (stream Event) {}
+    rpc schedule_event(Event) returns (Text) {}
+    rpc edit_event(Event) returns (Text) {}
+    rpc delete_event(Event) returns (Text) {}
+
+    rpc replica_client_receive_message(Text) returns (Text) {}
+
+    rpc log_update(Event) returns (Text) {}
+
+    rpc alive_ping(Text) returns (Text) {}
+    rpc notify_leader(Text) returns (Text) {}
+}
+
+message Text {
+    string text = 1;
+}
+
+message Event {
+    string host = 1;
+    string description = 2;
+    int64 starttime = 3;
+    int64 endtime = 4;
+}
+
+message Empty {}
