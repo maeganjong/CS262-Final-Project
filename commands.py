@@ -64,8 +64,8 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 # Event Object
 class Event:
     def __init__(self, host=None, title=None, starttime=None, duration=None, description=None):
-        host = host
-        title = title
-        starttime = starttime
-        duration = duration
-        description = description
+        self.host = host
+        self.title = title
+        self.starttime = starttime
+        self.duration = duration
+        self.description = description

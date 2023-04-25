@@ -368,17 +368,18 @@ class CalendarServicer(proto_grpc.CalendarServicer):
     def schedule_event(self, request, context):
         host = request.host
         title = request.title
-        print(request)
         starttime = request.starttime
         duration = request.duration
         description = request.description
 
         new_event = Event(host=host, title=title, starttime=starttime, duration=duration, description=description)
-        new_event_endtime = new_event.starttime + datetime.timedelta(hours=new_event.duration)
+        new_starttime = datetime.datetime.utcfromtimestamp(new_event.starttime)
+        new_event_endtime = new_starttime + datetime.timedelta(hours=new_event.duration)
         mutex_events.acquire()
         for event in self.events:
-            event_endtime = event.start_time + datetime.timedelta(hours=event.duration)
-            if not (new_event_endtime <= event.starttime or event_endtime <= new_event.starttime):
+            event_starttime = datetime.datetime.utcfromtimestamp(event.starttime)
+            event_endtime = event_starttime + datetime.timedelta(hours=event.duration)
+            if not (new_event_endtime <= event_starttime or event_endtime <= new_starttime):
                 # TODO: CHECK THIS LATER
                 mutex_events.release()
                 return proto.Text(text=EVENT_CONFLICT)

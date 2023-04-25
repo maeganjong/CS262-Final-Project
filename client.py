@@ -221,7 +221,6 @@ class CalendarClient:
         # TODO FINISH THIS STUFF
         dt = datetime.datetime(int(year), int(month), int(day), int(hour))
         utc_timestamp = dt.timestamp()
-        print(utc_timestamp)
 
         new_event = proto.Event(host=self.username, title=title, starttime=int(utc_timestamp), duration=int(duration), description=description)
 
