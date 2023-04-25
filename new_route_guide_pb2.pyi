@@ -22,6 +22,16 @@ class Event(_message.Message):
     title: str
     def __init__(self, host: _Optional[str] = ..., title: _Optional[str] = ..., starttime: _Optional[int] = ..., duration: _Optional[int] = ..., description: _Optional[str] = ...) -> None: ...
 
+class Log(_message.Message):
+    __slots__ = ["info", "recipient", "sender"]
+    INFO_FIELD_NUMBER: _ClassVar[int]
+    RECIPIENT_FIELD_NUMBER: _ClassVar[int]
+    SENDER_FIELD_NUMBER: _ClassVar[int]
+    info: str
+    recipient: str
+    sender: str
+    def __init__(self, sender: _Optional[str] = ..., recipient: _Optional[str] = ..., info: _Optional[str] = ...) -> None: ...
+
 class Text(_message.Message):
     __slots__ = ["text"]
     TEXT_FIELD_NUMBER: _ClassVar[int]

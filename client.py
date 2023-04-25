@@ -27,8 +27,6 @@ class CalendarClient:
         self.logged_in = False
         self.username = None
 
-        self.schedule_event()
-
         while not self.logged_in:
             self.login()
 
@@ -134,6 +132,8 @@ class CalendarClient:
             try: 
                 if purpose == "0":
                     response = self.connection.register_user(new_text)
+                    # TODO: DISPLAY ALL EVENTS
+                    self.display_events()
                 elif purpose == "1":
                     response = self.connection.login_user(new_text)
                 
@@ -146,6 +146,7 @@ class CalendarClient:
                     return username, True
 
             except Exception as e:
+                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
 
@@ -203,11 +204,26 @@ class CalendarClient:
 
     '''Notifies a new event for the user.'''
     def notify_new_event(self):
-        print("NOT IMPLEMENTED")
+        done = False
+        while not done:
+            try:
+                notifications = self.connection.notify_new_event(proto.Text(text=self.username))
+                for notification in notifications:
+                    print(f"[New Event From {notification.host}]: {notification.title}")
+                    print(f"Event Description: {notification.description}")
+                    starttime = datetime.datetime.utcfromtimestamp(notification.starttime)
+                    endtime = starttime + datetime.timedelta(hours=notification.duration)
+                    print(f"Starts at: {starttime}")
+                    print(f"Ends at: {endtime}")
+                done = True
+            except Exception as e:
+                # Power transfer to a backup replica
+                self.find_next_leader()
 
     
     '''Schedules a new event for the user.'''
     def schedule_event(self):
+        os.system(f'cal')
         year = input("What year would you like your event to start at? (1-9999)\n")
         month = input("What month would you like your event to start at? (1-12)\n")
         os.system(f'cal {month} {year}') # TODO: SOME ERROR CATCHING?
@@ -234,6 +250,7 @@ class CalendarClient:
 
     '''Displays all events for the user.'''
     def display_events(self):
+        # TODO: SHOULD CALL SEARCH EVENTS WITH THE RIGHT SETUP!
         print("NOT IMPLEMENTED")
 
 

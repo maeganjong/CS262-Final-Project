@@ -85,15 +85,15 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             request.text = username
 
             self.register_user(request, None)
-        elif purpose == SEND_SUCCESSFUL:
-            sender = parsed_line[1]
-            recipient = parsed_line[2]
-            message = SEPARATOR.join(parsed_line[3:])
+        # elif purpose == SEND_SUCCESSFUL:
+        #     sender = parsed_line[1]
+        #     recipient = parsed_line[2]
+        #     message = SEPARATOR.join(parsed_line[3:])
 
-            request = proto.Note()
-            request.sender = sender
-            request.recipient = recipient
-            request.message = message
+        #     request = proto.Note()
+        #     request.sender = sender
+        #     request.recipient = recipient
+        #     request.message = message
 
             self.client_send_message(request, None)
         elif purpose == UPDATE_SUCCESSFUL:
@@ -211,7 +211,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             logger = logging.getLogger(f'{self.port}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Note(sender=f'{self.port}', recipient="", message=text))
+                other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
         except Exception as e:
             print("Error logging to other servers")
         
@@ -259,7 +259,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 logger = logging.getLogger(f'{self.port}')
                 logger.info(text)
                 for other in self.other_servers:
-                    other.log_update(proto.Note(sender=f'{self.port}', recipient="", message=text))
+                    other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
             except Exception as e:
                 print("Error logging update")
 
@@ -286,6 +286,11 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             del self.new_event_notifications[username]
             mutex_new_event_notifications.release()
 
+            # Delete all events created by this user
+            for event in self.events:
+                if event.host == username:
+                    self.delete_event(event)
+
             mutex_accounts.acquire()
             self.accounts.remove(username)
             mutex_accounts.release()
@@ -310,7 +315,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             logger = logging.getLogger(f'{self.port}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Note(sender=f'{self.port}', recipient="", message=text))
+                other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
         except Exception as e:
             print("Error logging to other servers")
         
@@ -353,15 +358,29 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             logger = logging.getLogger(f'{self.port}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Note(sender=f'{self.port}', recipient="", message=text))
+                other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
         except Exception as e:
             print("Error logging to other servers")
 
         return proto.Text(text=LOGOUT_SUCCESSFUL)
     
     '''Notifies a new event for the user.'''
-    def notify_new_event(self):
-        print("NOT IMPLEMENTED")
+    def notify_new_event(self, request, context):
+        username = request.text
+        mutex_new_event_notifications.acquire()
+        new_events = self.new_event_notifications[username]
+        for new_event in new_events:
+            formatted_message = proto.Event()
+            formatted_message.host = new_event.host
+            formatted_message.title = new_event.title
+            formatted_message.starttime = new_event.starttime
+            formatted_message.duration = new_event.duration
+            formatted_message.description = new_event.description
+
+            yield formatted_message
+        self.new_event_notifications[username] = []
+        mutex_new_event_notifications.release()
+        return proto.Text(text=UPDATE_SUCCESSFUL)
     
 
     '''Schedules a new event for the user.'''
@@ -386,12 +405,14 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         self.events.append(new_event)
         mutex_events.release()
 
-        return proto.Text(text=EVENT_SCHEDULED)
-    
+        # Update notifications for all accounts
+        for user in self.accounts:
+            if user != host:
+                mutex_new_event_notifications.acquire()
+                self.new_event_notifications[user].append(new_event)
+                mutex_new_event_notifications.release()
 
-    '''Displays all events for the user.'''
-    def display_events(self, request, context):
-        print("NOT IMPLEMENTED")
+        return proto.Text(text=EVENT_SCHEDULED)
 
 
     '''Searches for events for the user.'''
