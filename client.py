@@ -3,6 +3,8 @@ import grpc
 import new_route_guide_pb2 as proto
 import new_route_guide_pb2_grpc
 import atexit
+import os
+import datetime
 
 class CalendarClient:   
     '''Instantiates the CalendarClient and runs the user experience of cycling through calendar functionalities.'''
@@ -24,6 +26,8 @@ class CalendarClient:
 
         self.logged_in = False
         self.username = None
+
+        self.schedule_event()
 
         while not self.logged_in:
             self.login()
@@ -204,7 +208,29 @@ class CalendarClient:
     
     '''Schedules a new event for the user.'''
     def schedule_event(self):
-        print("NOT IMPLEMENTED")
+        year = input("What year would you like your event to start at? (1-9999)\n")
+        month = input("What month would you like your event to start at? (1-12)\n")
+        os.system(f'cal {month} {year}') # TODO: SOME ERROR CATCHING?
+        day = input("What day would you like your event to start at?\n")
+        hour = input("What hour would you like your event to start at?\n")
+        # TODO: SOME ERROR CATCHING
+        duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
+        title = input("What would you like to name your event?\n")
+        description = input("What would you like to describe your event?\n")
+
+        # TODO FINISH THIS STUFF
+        dt = datetime.datetime(int(year), int(month), int(day), int(hour))
+        utc_timestamp = dt.timestamp()
+        print(utc_timestamp)
+
+        new_event = proto.Event(host=self.username, title=title, starttime=int(utc_timestamp), duration=int(duration), description=description)
+
+        try:
+            response = self.connection.schedule_event(new_event)
+        except Exception as e:
+            print(e)
+            print("HERE")
+        print(response.text)
     
 
     '''Displays all events for the user.'''

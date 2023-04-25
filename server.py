@@ -11,6 +11,7 @@ from commands import *
 
 import logging
 import threading
+import datetime
 
 mutex_accounts = threading.Lock()
 mutex_active_accounts = threading.Lock()
@@ -365,7 +366,26 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Schedules a new event for the user.'''
     def schedule_event(self, request, context):
-        print("NOT IMPLEMENTED")
+        host = request.host
+        title = request.title
+        print(request)
+        starttime = request.starttime
+        duration = request.duration
+        description = request.description
+
+        new_event = Event(host=host, title=title, starttime=starttime, duration=duration, description=description)
+        new_event_endtime = new_event.starttime + datetime.timedelta(hours=new_event.duration)
+        mutex_events.acquire()
+        for event in self.events:
+            event_endtime = event.start_time + datetime.timedelta(hours=event.duration)
+            if not (new_event_endtime <= event.starttime or event_endtime <= new_event.starttime):
+                # TODO: CHECK THIS LATER
+                mutex_events.release()
+                return proto.Text(text=EVENT_CONFLICT)
+        self.events.append(new_event)
+        mutex_events.release()
+
+        return proto.Text(text=EVENT_SCHEDULED)
     
 
     '''Displays all events for the user.'''

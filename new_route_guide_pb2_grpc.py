@@ -54,6 +54,16 @@ class CalendarStub(object):
                 request_serializer=new__route__guide__pb2.Event.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Text.FromString,
                 )
+        self.edit_event = channel.unary_unary(
+                '/routeguide.Calendar/edit_event',
+                request_serializer=new__route__guide__pb2.Event.SerializeToString,
+                response_deserializer=new__route__guide__pb2.Text.FromString,
+                )
+        self.delete_event = channel.unary_unary(
+                '/routeguide.Calendar/delete_event',
+                request_serializer=new__route__guide__pb2.Event.SerializeToString,
+                response_deserializer=new__route__guide__pb2.Text.FromString,
+                )
         self.replica_client_receive_message = channel.unary_unary(
                 '/routeguide.Calendar/replica_client_receive_message',
                 request_serializer=new__route__guide__pb2.Text.SerializeToString,
@@ -127,6 +137,18 @@ class CalendarServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def edit_event(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def delete_event(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def replica_client_receive_message(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -191,6 +213,16 @@ def add_CalendarServicer_to_server(servicer, server):
             ),
             'schedule_event': grpc.unary_unary_rpc_method_handler(
                     servicer.schedule_event,
+                    request_deserializer=new__route__guide__pb2.Event.FromString,
+                    response_serializer=new__route__guide__pb2.Text.SerializeToString,
+            ),
+            'edit_event': grpc.unary_unary_rpc_method_handler(
+                    servicer.edit_event,
+                    request_deserializer=new__route__guide__pb2.Event.FromString,
+                    response_serializer=new__route__guide__pb2.Text.SerializeToString,
+            ),
+            'delete_event': grpc.unary_unary_rpc_method_handler(
+                    servicer.delete_event,
                     request_deserializer=new__route__guide__pb2.Event.FromString,
                     response_serializer=new__route__guide__pb2.Text.SerializeToString,
             ),
@@ -355,6 +387,40 @@ class Calendar(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/schedule_event',
+            new__route__guide__pb2.Event.SerializeToString,
+            new__route__guide__pb2.Text.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def edit_event(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/edit_event',
+            new__route__guide__pb2.Event.SerializeToString,
+            new__route__guide__pb2.Text.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def delete_event(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/delete_event',
             new__route__guide__pb2.Event.SerializeToString,
             new__route__guide__pb2.Text.FromString,
             options, channel_credentials,

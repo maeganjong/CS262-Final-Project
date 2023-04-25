@@ -47,6 +47,11 @@ LOGOUT_SUCCESSFUL = "Logout successful."
 UPDATE_SUCCESSFUL = "Update successful."
 SEND_SUCCESSFUL = "Message sent!"
 
+EVENT_SCHEDULED = "Event scheduled."
+EVENT_CONFLICT = "Event conflicts with already existing events."
+EVENT_EDITED = "Event edited."
+EVENT_DELETED = "Event deleted."
+
 # Power transfer purposes
 LEADER_ALIVE = "Leader is alive."
 IS_ALIVE = "Are you alive?"
@@ -55,3 +60,12 @@ LEADER_CONFIRMATION = "Leader confirmation." # Notifies client that backup is no
 
 # Other
 DISCONNECT_MESSAGE = "!DISCONNECT"
+
+# Event Object
+class Event:
+    def __init__(self, host=None, title=None, starttime=None, duration=None, description=None):
+        host = host
+        title = title
+        starttime = starttime
+        duration = duration
+        description = description
