@@ -266,14 +266,24 @@ class CalendarClient:
 
         new_event = proto.Event(host=self.username, starttime=int(utc_timestamp), duration=int(duration), description=description)
 
-        response = self.connection.schedule_event(new_event)
-        print(response.text)
+        done = False
+        while not done:
+            try:
+                response = self.connection.schedule_event(new_event)
+                print(response.text)
+                done = True
+            except Exception as e:
+                print(e)
+                # Power transfer to a backup replica
+                self.find_next_leader()
     
 
     '''Displays all events for the user.'''
     def display_events(self):
         self.search_events(display_all=True)
+    
 
+    # TODO: REPLICATION FOR THIS ONE CLEAN THIS UP FIRST!
     '''Searches for events for the user.'''
     def search_events(self, display_all=False, option=None, user=None):
         # 0 = user, 1 = start time, 2 = description
@@ -328,7 +338,16 @@ class CalendarClient:
             return
 
         # Checking permissions
-        user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
+        done = False
+        while not done:
+            try:
+                user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
+                done = True
+            except Exception as e:
+                print(e)
+                # Power transfer to a backup replica
+                self.find_next_leader()
+        
         event_to_edit = None
         for user_event in user_events:
             if user_event.id == event_id:
@@ -357,8 +376,16 @@ class CalendarClient:
                 description = input("What would you like to describe your event?\n")
                 updated_event.description = description
 
-        response = self.connection.edit_event(updated_event)
-        print(response)
+        done = False
+        while not done:
+            try:
+                response = self.connection.edit_event(updated_event)
+                print(response.text)
+                done = True
+            except Exception as e:
+                print(e)
+                # Power transfer to a backup replica
+                self.find_next_leader()
     
 
     '''Deletes an event for the user.'''
@@ -375,7 +402,16 @@ class CalendarClient:
             return
         
         # Checking permissions
-        user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
+        done = False
+        while not done:
+            try:
+                user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
+                done = True
+            except Exception as e:
+                print(e)
+                # Power transfer to a backup replica
+                self.find_next_leader()
+        
         event_to_edit = None
         for user_event in user_events:
             if user_event.id == event_id:
@@ -386,8 +422,16 @@ class CalendarClient:
             print("You do not have permission to delete this event.")
             return
         
-        response = self.connection.delete_event(proto.Event(id=event_id))
-        print(response)
+        done = False
+        while not done:
+            try:
+                response = self.connection.delete_event(proto.Event(id=event_id))
+                print(response.text)
+                done = True
+            except Exception as e:
+                print(e)
+                # Power transfer to a backup replica
+                self.find_next_leader()
 
 
 
