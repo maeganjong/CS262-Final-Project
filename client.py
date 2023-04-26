@@ -76,6 +76,7 @@ class CalendarClient:
     """Displays menu for user to select what to do next."""
     def display_menu(self):
         # TODO: MAYBE CHANGE THIS UI IDK?
+        print()
         print("Press 0 to schedule a new event.")
         print("Press 1 to see all current events.")
         print("Press 2 to search for events.")
@@ -84,6 +85,7 @@ class CalendarClient:
         print("Press 5 to see all users.")
         print("Press 6 to logout.")
         print("Press 7 to delete your account.")
+        print()
 
         action = input("What would you like to do?\n")
         if action == "0":
@@ -93,7 +95,7 @@ class CalendarClient:
         elif action == "2":
             print("Press 0 to search by user.")
             print("Press 1 to search by start time.")
-            print("Press 2 to search by title.")
+            print("Press 2 to search by description.")
 
             option = input("What would you like to do?\n")
             if option=="0":
@@ -101,7 +103,7 @@ class CalendarClient:
             elif option=="1":
                 self.search_events(option=SEARCH_TIME)
             elif option=="2":
-                self.search_events(option=SEARCH_TITLE)
+                self.search_events(option=SEARCH_DESCRIPTION)
             else:
                 print("Invalid input. Try again.")
         elif action == "3":
@@ -126,9 +128,11 @@ class CalendarClient:
             if action == "0":
                 username, logged_in = self.enter_user(action)
                 self.logged_in = logged_in
+                self.username = username
             elif action == "1":
                 username, logged_in = self.enter_user(action)
                 self.logged_in = logged_in
+                self.username = username
     
     '''Helper function to login for users to either register or login.'''
     def enter_user(self, purpose):
@@ -215,12 +219,14 @@ class CalendarClient:
     
 
     def print_event(self, event):
-        print(f"[{event.id}] New Event From {event.host}: {event.title}")
+        print("--------------------------------------------------")
+        print(f"[{event.id}] Event By {event.host}")
         print(f"Event Description: {event.description}")
         starttime = datetime.datetime.utcfromtimestamp(event.starttime)
         endtime = starttime + datetime.timedelta(hours=event.duration)
         print(f"Starts at: {starttime}")
         print(f"Ends at: {endtime}")
+        print("--------------------------------------------------")
 
 
     '''Notifies a new event for the user.'''
@@ -239,7 +245,7 @@ class CalendarClient:
 
     def prompt_date(self):
         os.system(f'cal')
-        year = input("What year would you like your event to start at? (1-9999)\n")
+        year = input("What year would you like your event to start at? \n")
         month = input("What month would you like your event to start at? (1-12)\n")
         os.system(f'cal {month} {year}') # TODO: SOME ERROR CATCHING?
         day = input("What day would you like your event to start at?\n")
@@ -252,14 +258,13 @@ class CalendarClient:
     def schedule_event(self):
         year, month, day, hour = self.prompt_date()
         duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
-        title = input("What would you like to name your event?\n")
-        description = input("What would you like to describe your event?\n")
+        description = input("How would you like to describe your event?\n")
 
         # TODO FINISH THIS STUFF
         dt = datetime.datetime(int(year), int(month), int(day), int(hour))
         utc_timestamp = dt.timestamp()
 
-        new_event = proto.Event(host=self.username, title=title, starttime=int(utc_timestamp), duration=int(duration), description=description)
+        new_event = proto.Event(host=self.username, starttime=int(utc_timestamp), duration=int(duration), description=description)
 
         response = self.connection.schedule_event(new_event)
         print(response.text)
@@ -267,52 +272,49 @@ class CalendarClient:
 
     '''Displays all events for the user.'''
     def display_events(self):
-        # TODO: SHOULD CALL SEARCH EVENTS WITH THE RIGHT SETUP!
         self.search_events(display_all=True)
 
     '''Searches for events for the user.'''
     def search_events(self, display_all=False, option=None, user=None):
-        # 0 = user, 1 = start time, 2 = title
+        # 0 = user, 1 = start time, 2 = description
         if display_all:
-            events = self.connection.search_event(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
+            events = self.connection.search_events(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
             for event in events:
-                self.print_event(events)
-                done = True
-        else:
+                self.print_event(event)
             
+        else:
             if option==DISPLAY_USER:
-                events = self.connection.search_event(proto.Search(function=SEARCH_USER,value=user))
+                events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=user))
                 for event in events:
-                    self.print_event(events)
-                    done = True
+                    self.print_event(event)
+            
             if option==SEARCH_USER:
                 print("here")
                 value=input("What's the user you'd like to search by?\n")
-                events = self.connection.search_event(proto.Search(function=SEARCH_USER,value=value))
+                events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=value))
                 for event in events:
-                    self.print_event(events)
-                    done = True
+                    self.print_event(event)
+            
             elif option==SEARCH_TIME:
                 value=input("What's the time you'd like to search by?\n")
-                events = self.connection.search_event(proto.Search(function=SEARCH_TIME,value=value))
+                events = self.connection.search_events(proto.Search(function=SEARCH_TIME,value=value))
                 for event in events:
-                    self.print_event(events)
-                    done = True
-            elif option==SEARCH_TITLE:
-                value=input("What's the title you'd like to search by?\n")
-                events = self.connection.search_event(proto.Search(function=SEARCH_TITLE,value=value))
+                    self.print_event(event)
+            
+            elif option==SEARCH_DESCRIPTION:
+                value=input("What's the description you'd like to search by?\n")
+                events = self.connection.search_events(proto.Search(function=SEARCH_DESCRIPTION,value=value))
                 for event in events:
-                    self.print_event(events)
-                    done = True
+                    self.print_event(event)
 
         print("NOT IMPLEMENTED")
 
 
     '''Edits an event for the user.'''
     def edit_event(self):
-        # TODO: display all events that the user created
-        print("These are the events you can edit:")
+        print("These are the events you have permission to edit:")
         self.search_events(option=DISPLAY_USER, user=self.username)
+
         event_id = input("What event would you like to edit? Please enter the event id.\n")
         try:
             event_id = int(event_id)
@@ -320,10 +322,26 @@ class CalendarClient:
             print("Invalid event id.")
             return
         # TODO: check valid event id/permissions and display current event details
-        edit_fields = input("Please enter all fields you'd like to edit. Separate each field with a comma. \n    [s] for start time\n    [d] for duration\n    [t] for title\n    [x] for description\n")
+        edit_fields = input("Please enter all fields you'd like to edit. Separate each field with a comma. \n    [s] for start time\n    [d] for duration\n    [t] for description\n")
         if edit_fields == "":
             print("No fields to edit.")
             return
+
+        # Checking permissions
+        user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
+        event_to_edit = None
+        for user_event in user_events:
+            if user_event.id == event_id:
+                event_to_edit = user_event
+                break
+        
+        if not event_to_edit:
+            print("You do not have permission to edit this event.")
+            return
+        
+        print("Current Event Details:")
+        self.print_event(event_to_edit)
+
         edit_fields = edit_fields.split(",")
         updated_event = proto.Event(id=event_id)
         for field in edit_fields:
@@ -336,9 +354,6 @@ class CalendarClient:
                 duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
                 updated_event.duration = int(duration)
             elif field == "t":
-                title = input("What would you like to name your event?\n")
-                updated_event.title = title
-            elif field == "x":
                 description = input("What would you like to describe your event?\n")
                 updated_event.description = description
 
@@ -348,14 +363,29 @@ class CalendarClient:
 
     '''Deletes an event for the user.'''
     def delete_event(self):
-        # TODO: display all events that the user created
+        # Display all events that the user created
+        print("These are the events you have permission to delete:")
+        self.search_events(option=DISPLAY_USER, user=self.username)
+
         event_id = input("What event would you like to delete? Please enter the event id.\n")
         try:
             event_id = int(event_id)
         except:
             print("Invalid event id.")
             return
-        # TODO: check valid event id/permissions and display current event details
+        
+        # Checking permissions
+        user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
+        event_to_edit = None
+        for user_event in user_events:
+            if user_event.id == event_id:
+                event_to_edit = user_event
+                break
+        
+        if not event_to_edit:
+            print("You do not have permission to delete this event.")
+            return
+        
         response = self.connection.delete_event(proto.Event(id=event_id))
         print(response)
 

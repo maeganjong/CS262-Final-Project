@@ -5,7 +5,7 @@ PORT2 = 8051
 PORT3 = 8052
 FORMAT = 'utf-8'
 ## Edit Server below to the hostname of the machine running the server
-SERVER1 = "dhcp-10-250-15-170.harvard.edu" 
+SERVER1 = "dhcp-10-250-100-11.harvard.edu" 
 SERVER2 = "dhcp-10-250-15-170.harvard.edu" 
 SERVER3 = "dhcp-10-250-116-175.harvard.edu" 
 
@@ -62,7 +62,7 @@ LEADER_CONFIRMATION = "Leader confirmation." # Notifies client that backup is no
 SEARCH_ALL_EVENTS = "give all events"
 SEARCH_USER = "give by user"
 SEARCH_TIME = "give by time"
-SEARCH_TITLE = "give by title"
+SEARCH_DESCRIPTION = "give by description"
 DISPLAY_USER = "display by user"
 
 # Other
@@ -70,10 +70,9 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 # Event Object
 class Event:
-    def __init__(self, id=None, host=None, title=None, starttime=None, duration=None, description=None):
+    def __init__(self, id=None, host=None, starttime=None, duration=None, description=None):
         self.id = id
         self.host = host
-        self.title = title
         self.starttime = starttime
         self.duration = duration
         self.description = description

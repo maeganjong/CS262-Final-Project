@@ -361,21 +361,23 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         return proto.Text(text=LOGOUT_SUCCESSFUL)
     
+
+    def convert_event_to_proto(self, event):
+        formatted_message = proto.Event()
+        formatted_message.id = event.id
+        formatted_message.host = event.host
+        formatted_message.starttime = event.starttime
+        formatted_message.duration = event.duration
+        formatted_message.description = event.description
+        return formatted_message
+    
     '''Notifies a new event for the user.'''
     def notify_new_event(self, request, context):
         username = request.text
         mutex_new_event_notifications.acquire()
         new_events = self.new_event_notifications[username]
         for new_event in new_events:
-            formatted_message = proto.Event()
-            formatted_message.id = new_event.id
-            formatted_message.host = new_event.host
-            formatted_message.title = new_event.title
-            formatted_message.starttime = new_event.starttime
-            formatted_message.duration = new_event.duration
-            formatted_message.description = new_event.description
-
-            yield formatted_message
+            yield self.convert_event_to_proto(new_event)
         self.new_event_notifications[username] = []
         mutex_new_event_notifications.release()
         return proto.Text(text=UPDATE_SUCCESSFUL)
@@ -384,12 +386,11 @@ class CalendarServicer(proto_grpc.CalendarServicer):
     '''Schedules a new event for the user.'''
     def schedule_event(self, request, context):
         host = request.host
-        title = request.title
         starttime = request.starttime
         duration = request.duration
         description = request.description
 
-        new_event = Event(id=self.next_event_id, host=host, title=title, starttime=starttime, duration=duration, description=description)
+        new_event = Event(id=self.next_event_id, host=host, starttime=starttime, duration=duration, description=description)
         new_starttime = datetime.datetime.utcfromtimestamp(new_event.starttime)
         new_event_endtime = new_starttime + datetime.timedelta(hours=new_event.duration)
         mutex_events.acquire()
@@ -415,17 +416,17 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
 
     '''Searches for events for the user.'''
-    def search_event(self, request, context):
+    def search_events(self, request, context):
         print("here!!!")
         function = request.function
         value = request.value
 
         if function==SEARCH_ALL_EVENTS:
-            # order self.events
+            # TODO: order self.events
             if len(self.events) == 0:
-                return proto.Event(description = "No user matches this!")
+                return proto.Event(description = "No events to display.")
             for event in self.events:
-                yield event
+                yield self.convert_event_to_proto(event)
         elif function==SEARCH_USER:
             print(SEARCH_USER)
             none_found = True
@@ -433,18 +434,18 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             for event in self.events:
                 if event.host==value:
                     none_found=False
-                    yield event
+                    yield self.convert_event_to_proto(event)
             if none_found:
                 yield proto.Event(description = "No user matches this!")
         elif function==SEARCH_TIME:
             print("NOT IMPLEMENTED")
-        elif function==SEARCH_TITLE:
+        elif function==SEARCH_DESCRIPTION:
             none_found = True
             for event in self.events:
-                x = re.search(value, event.title)
+                x = re.search(value, event.description)
                 if x is not None:
                     none_found=False
-                    yield event
+                    yield self.convert_event_to_proto(event)
             if none_found:
                 yield proto.Event(description = "No user matches this!")
 
@@ -456,7 +457,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         for event in self.events:
             if event.id == event_id:
                 mutex_events.acquire()
-                event.title = request.title
                 event.starttime = request.starttime
                 event.duration = request.duration
                 event.description = request.description

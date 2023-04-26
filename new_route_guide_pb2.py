@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15new_route_guide.proto\x12\nrouteguide\")\n\x06Search\x12\x10\n\x08\x66unction\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x14\n\x04Text\x12\x0c\n\x04text\x18\x01 \x01(\t\"N\n\x05\x45vent\x12\x0c\n\x04host\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x11\n\tstarttime\x18\x03 \x01(\x03\x12\x0f\n\x07\x65ndtime\x18\x04 \x01(\x03\"\x07\n\x05\x45mpty2\xd9\x06\n\x08\x43\x61lendar\x12\x32\n\nlogin_user\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x35\n\rregister_user\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12:\n\x10\x64isplay_accounts\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x30\x01\x12\x39\n\x11\x63heck_user_exists\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x36\n\x0e\x64\x65lete_account\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12.\n\x06logout\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12;\n\x10notify_new_event\x12\x10.routeguide.Text\x1a\x11.routeguide.Event\"\x00\x30\x01\x12\x37\n\x0eschedule_event\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x33\n\nedit_event\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x35\n\x0c\x64\x65lete_event\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x39\n\x0csearch_event\x12\x12.routeguide.Search\x1a\x11.routeguide.Event\"\x00\x30\x01\x12\x46\n\x1ereplica_client_receive_message\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x33\n\nlog_update\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x32\n\nalive_ping\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x35\n\rnotify_leader\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x42\x36\n\x1bio.grpc.examples.routeguideB\x0fRouteGuideProtoP\x01\xa2\x02\x03RTGb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15new_route_guide.proto\x12\nrouteguide\")\n\x06Search\x12\x10\n\x08\x66unction\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x14\n\x04Text\x12\x0c\n\x04text\x18\x01 \x01(\t\"[\n\x05\x45vent\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04host\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12\x11\n\tstarttime\x18\x04 \x01(\x03\x12\x10\n\x08\x64uration\x18\x05 \x01(\x03\"\x07\n\x05\x45mpty2\xda\x06\n\x08\x43\x61lendar\x12\x32\n\nlogin_user\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x35\n\rregister_user\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12:\n\x10\x64isplay_accounts\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x30\x01\x12\x39\n\x11\x63heck_user_exists\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x36\n\x0e\x64\x65lete_account\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12.\n\x06logout\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12;\n\x10notify_new_event\x12\x10.routeguide.Text\x1a\x11.routeguide.Event\"\x00\x30\x01\x12\x37\n\x0eschedule_event\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x33\n\nedit_event\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x35\n\x0c\x64\x65lete_event\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12:\n\rsearch_events\x12\x12.routeguide.Search\x1a\x11.routeguide.Event\"\x00\x30\x01\x12\x46\n\x1ereplica_client_receive_message\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x33\n\nlog_update\x12\x11.routeguide.Event\x1a\x10.routeguide.Text\"\x00\x12\x32\n\nalive_ping\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x12\x35\n\rnotify_leader\x12\x10.routeguide.Text\x1a\x10.routeguide.Text\"\x00\x42\x36\n\x1bio.grpc.examples.routeguideB\x0fRouteGuideProtoP\x01\xa2\x02\x03RTGb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'new_route_guide_pb2', globals())
@@ -26,9 +26,9 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _TEXT._serialized_start=80
   _TEXT._serialized_end=100
   _EVENT._serialized_start=102
-  _EVENT._serialized_end=180
-  _EMPTY._serialized_start=182
-  _EMPTY._serialized_end=189
-  _CALENDAR._serialized_start=192
-  _CALENDAR._serialized_end=1049
+  _EVENT._serialized_end=193
+  _EMPTY._serialized_start=195
+  _EMPTY._serialized_end=202
+  _CALENDAR._serialized_start=205
+  _CALENDAR._serialized_end=1063
 # @@protoc_insertion_point(module_scope)

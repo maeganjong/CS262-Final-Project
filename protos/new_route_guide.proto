@@ -22,7 +22,7 @@ service Calendar {
     rpc edit_event(Event) returns (Text) {}
     rpc delete_event(Event) returns (Text) {}
 
-    rpc search_event(Search) returns (stream Event) {}
+    rpc search_events(Search) returns (stream Event) {}
 
     rpc replica_client_receive_message(Text) returns (Text) {}
 
@@ -42,10 +42,11 @@ message Text {
 }
 
 message Event {
-    string host = 1;
-    string description = 2;
-    int64 starttime = 3;
-    int64 endtime = 4;
+    int64 id = 1;
+    string host = 2;
+    string description = 3;
+    int64 starttime = 4;
+    int64 duration = 5;
 }
 
 message Empty {}
