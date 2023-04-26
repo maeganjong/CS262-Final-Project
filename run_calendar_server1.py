@@ -1,9 +1,10 @@
 from server import *
 
-calendar_server = ServerRunner(ip=SERVER1, port=PORT1)
+replica_id, address = REPLICA_IDS[0]
+calendar_server = ServerRunner(id=replica_id, address=address)
 print("[STARTING] lead server is starting...")
 calendar_server.start()
 
-# chat_server.connect_to_replicas((SERVER2, PORT2), (SERVER3, PORT3))
+# calendar_server.connect_to_replicas()
 
 calendar_server.wait_for_termination()

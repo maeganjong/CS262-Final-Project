@@ -20,8 +20,9 @@ mutex_events = threading.Lock()
 
 class CalendarServicer(proto_grpc.CalendarServicer):
     '''Initializes CalendarServicer that sets up the datastructures to store user accounts and messages.'''
-    def __init__(self, port=8050, logfile = None):
-        self.port = port
+    def __init__(self, id=0, address=None, logfile = None):
+        self.ip, self.port = address
+        self.id = id
 
         self.accounts = [] # Usernames of all accounts
         self.active_accounts = [] # Username of all accounts that are currently logged in
@@ -34,9 +35,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         self.next_event_id = 1
 
         # Sets up logging functionality
-        self.setup_logger(f'{PORT1}', f'{PORT1}.log')
-        self.setup_logger(f'{PORT2}', f'{PORT2}.log')
-        self.setup_logger(f'{PORT3}', f'{PORT3}.log')
+        for replica_id, address in REPLICA_IDS:
+            self.setup_logger(f'{replica_id}', f'{replica_id}.log')
         
         if logfile:
             # Persistence: all servers went down and set up this server from the log file
@@ -121,8 +121,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         f.close()
 
     '''Connects each replica based on the hierarchy of backups'''
-    def connect_to_replicas(self, address1, address2):
-        if self.port == PORT1:
+    def connect_to_replicas(self):
+        if self.id == 1:
             self.is_leader = True
             print("I am the leader")
             connection1 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER2}:{PORT2}"))
@@ -132,15 +132,15 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.other_servers[connection1] = PORT2
             self.other_servers[connection2] = PORT3
             
-        elif self.port == PORT2:
-            print("I am a backup 8051")
+        elif self.id == 2:
+            print("I am first backup")
             connection1 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER1}:{PORT1}"))
             connection3 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER3}:{PORT3}"))
             self.backup_connections[connection3] = PORT3
             self.other_servers[connection1] = PORT1
             self.other_servers[connection3] = PORT3
         else:
-            print("I am a backup 8052")
+            print("I am second backup")
             connection1 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER1}:{PORT1}"))
             connection2 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER2}:{PORT2}"))
             self.other_servers[connection1] = PORT1
@@ -482,12 +482,12 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 """Class for running server backend functionality."""
 class ServerRunner:
     """Initialize a server instance."""
-    def __init__(self, ip = "localhost", port = 8050, logfile=None):
-        self.ip = ip
-        self.port = port
+    def __init__(self, id = 0, address = (None, None), logfile=None):
+        self.id = id
+        self.ip, self.port = address
 
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        self.calendar_servicer = CalendarServicer(self.port, logfile=logfile)
+        self.calendar_servicer = CalendarServicer(id=self.id, address=address, logfile=logfile)
     
     """Function for starting server."""
     def start(self):
@@ -500,8 +500,8 @@ class ServerRunner:
         self.server.wait_for_termination()
     
     """Function for connecting to replicas."""
-    def connect_to_replicas(self, port1, port2):
-        self.calendar_servicer.connect_to_replicas(port1, port2)
+    def connect_to_replicas(self):
+        self.calendar_servicer.connect_to_replicas()
 
     """Function for stopping server."""
     def stop(self):
