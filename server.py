@@ -421,10 +421,9 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Edits an event for the user.'''
     def edit_event(self, request, context):
+        # TODO: check for conflicts later
         event_id = request.id
         for event in self.events:
-            print(event_id)
-            print(event.id)
             if event.id == event_id:
                 mutex_events.acquire()
                 event.title = request.title
