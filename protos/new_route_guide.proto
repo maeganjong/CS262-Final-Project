@@ -22,12 +22,19 @@ service Calendar {
     rpc edit_event(Event) returns (Text) {}
     rpc delete_event(Event) returns (Text) {}
 
+    rpc search_event(Search) returns (stream Event) {}
+
     rpc replica_client_receive_message(Text) returns (Text) {}
 
     rpc log_update(Event) returns (Text) {}
 
     rpc alive_ping(Text) returns (Text) {}
     rpc notify_leader(Text) returns (Text) {}
+}
+
+message Search {
+    string function = 1;
+    string value = 2;
 }
 
 message Text {

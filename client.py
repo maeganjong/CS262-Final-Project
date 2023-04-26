@@ -91,7 +91,15 @@ class CalendarClient:
         elif action == "1":
             self.display_events()
         elif action == "2":
-            self.search_events()
+            print("Press 0 to search by user.")
+            print("Press 1 to search by start time.")
+            print("Press 2 to search by title.")
+
+            option = input("What would you like to do?\n")
+            if option=="0" or option=="1" or option=="2":
+                self.search_events(option=option)
+            else:
+                print("Invalid input. Try again.")
         elif action == "3":
             self.edit_event()
         elif action == "4":
@@ -256,18 +264,50 @@ class CalendarClient:
     '''Displays all events for the user.'''
     def display_events(self):
         # TODO: SHOULD CALL SEARCH EVENTS WITH THE RIGHT SETUP!
-        print("NOT IMPLEMENTED")
-
+        self.search_events(display_all=True)
 
     '''Searches for events for the user.'''
-    def search_events(self):
+    def search_events(self, display_all=False, option=None, user=None):
+        # 0 = user, 1 = start time, 2 = title
+ 
+        if display_all:
+            events = self.connection.search_event(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
+            for event in events:
+                self.print_event(events)
+                done = True
+        else:
+            if option==DISPLAY_USER:
+                events = self.connection.search_event(proto.Search(function=SEARCH_USER,value=user))
+                for event in events:
+                    self.print_event(events)
+                    done = True
+            if option==SEARCH_USER:
+                value=("What's the user you'd like to search by?\n")
+                events = self.connection.search_event(proto.Search(function=SEARCH_USER,value=value))
+                for event in events:
+                    self.print_event(events)
+                    done = True
+            elif option==SEARCH_TIME:
+                value=("What's the time you'd like to search by?\n")
+                events = self.connection.search_event(proto.Search(function=SEARCH_TIME,value=value))
+                for event in events:
+                    self.print_event(events)
+                    done = True
+            elif option==SEARCH_TITLE:
+                value=("What's the title you'd like to search by?\n")
+                events = self.connection.search_event(proto.Search(function=SEARCH_TITLE,value=value))
+                for event in events:
+                    self.print_event(events)
+                    done = True
+
         print("NOT IMPLEMENTED")
 
 
     '''Edits an event for the user.'''
     def edit_event(self):
         # TODO: display all events that the user created
-
+        print("These are the events you can edit:")
+        self.search_events(option=DISPLAY_USER, user=self.username)
         event_id = input("What event would you like to edit? Please enter the event id.\n")
         try:
             event_id = int(event_id)

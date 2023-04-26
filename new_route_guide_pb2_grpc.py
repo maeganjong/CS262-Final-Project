@@ -64,9 +64,9 @@ class CalendarStub(object):
                 request_serializer=new__route__guide__pb2.Event.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Text.FromString,
                 )
-        self.search_events = channel.unary_stream(
-                '/routeguide.Calendar/search_events',
-                request_serializer=new__route__guide__pb2.Event.SerializeToString,
+        self.search_event = channel.unary_stream(
+                '/routeguide.Calendar/search_event',
+                request_serializer=new__route__guide__pb2.Search.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Event.FromString,
                 )
         self.replica_client_receive_message = channel.unary_unary(
@@ -154,7 +154,7 @@ class CalendarServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def search_events(self, request, context):
+    def search_event(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -237,9 +237,9 @@ def add_CalendarServicer_to_server(servicer, server):
                     request_deserializer=new__route__guide__pb2.Event.FromString,
                     response_serializer=new__route__guide__pb2.Text.SerializeToString,
             ),
-            'search_events': grpc.unary_stream_rpc_method_handler(
-                    servicer.search_events,
-                    request_deserializer=new__route__guide__pb2.Event.FromString,
+            'search_event': grpc.unary_stream_rpc_method_handler(
+                    servicer.search_event,
+                    request_deserializer=new__route__guide__pb2.Search.FromString,
                     response_serializer=new__route__guide__pb2.Event.SerializeToString,
             ),
             'replica_client_receive_message': grpc.unary_unary_rpc_method_handler(
@@ -443,7 +443,7 @@ class Calendar(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def search_events(request,
+    def search_event(request,
             target,
             options=(),
             channel_credentials=None,
@@ -453,8 +453,8 @@ class Calendar(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/routeguide.Calendar/search_events',
-            new__route__guide__pb2.Event.SerializeToString,
+        return grpc.experimental.unary_stream(request, target, '/routeguide.Calendar/search_event',
+            new__route__guide__pb2.Search.SerializeToString,
             new__route__guide__pb2.Event.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

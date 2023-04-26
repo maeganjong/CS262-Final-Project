@@ -5,7 +5,7 @@ PORT2 = 8051
 PORT3 = 8052
 FORMAT = 'utf-8'
 ## Edit Server below to the hostname of the machine running the server
-SERVER1 = "dhcp-10-250-100-11.harvard.edu" 
+SERVER1 = "dhcp-10-250-15-170.harvard.edu" 
 SERVER2 = "dhcp-10-250-15-170.harvard.edu" 
 SERVER3 = "dhcp-10-250-116-175.harvard.edu" 
 
@@ -57,6 +57,13 @@ LEADER_ALIVE = "Leader is alive."
 IS_ALIVE = "Are you alive?"
 LEADER_NOTIFICATION = "Leader notification." # Notifies backup that they are now leader
 LEADER_CONFIRMATION = "Leader confirmation." # Notifies client that backup is now leader
+
+# Search actions
+SEARCH_ALL_EVENTS = "give all events"
+SEARCH_USER = "give by user"
+SEARCH_TIME = "give by time"
+SEARCH_TITLE = "give by title"
+DISPLAY_USER = "display by user"
 
 # Other
 DISCONNECT_MESSAGE = "!DISCONNECT"
