@@ -96,8 +96,12 @@ class CalendarClient:
             print("Press 2 to search by title.")
 
             option = input("What would you like to do?\n")
-            if option=="0" or option=="1" or option=="2":
-                self.search_events(option=option)
+            if option=="0":
+                self.search_events(option=SEARCH_USER)
+            elif option=="1":
+                self.search_events(option=SEARCH_TIME)
+            elif option=="2":
+                self.search_events(option=SEARCH_TITLE)
             else:
                 print("Invalid input. Try again.")
         elif action == "3":
@@ -141,7 +145,7 @@ class CalendarClient:
                 if purpose == "0":
                     response = self.connection.register_user(new_text)
                     # TODO: DISPLAY ALL EVENTS
-                    self.display_events()
+                    self.display_menu()
                 elif purpose == "1":
                     response = self.connection.login_user(new_text)
                 
@@ -269,32 +273,33 @@ class CalendarClient:
     '''Searches for events for the user.'''
     def search_events(self, display_all=False, option=None, user=None):
         # 0 = user, 1 = start time, 2 = title
- 
         if display_all:
             events = self.connection.search_event(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
             for event in events:
                 self.print_event(events)
                 done = True
         else:
+            
             if option==DISPLAY_USER:
                 events = self.connection.search_event(proto.Search(function=SEARCH_USER,value=user))
                 for event in events:
                     self.print_event(events)
                     done = True
             if option==SEARCH_USER:
-                value=("What's the user you'd like to search by?\n")
+                print("here")
+                value=input("What's the user you'd like to search by?\n")
                 events = self.connection.search_event(proto.Search(function=SEARCH_USER,value=value))
                 for event in events:
                     self.print_event(events)
                     done = True
             elif option==SEARCH_TIME:
-                value=("What's the time you'd like to search by?\n")
+                value=input("What's the time you'd like to search by?\n")
                 events = self.connection.search_event(proto.Search(function=SEARCH_TIME,value=value))
                 for event in events:
                     self.print_event(events)
                     done = True
             elif option==SEARCH_TITLE:
-                value=("What's the title you'd like to search by?\n")
+                value=input("What's the title you'd like to search by?\n")
                 events = self.connection.search_event(proto.Search(function=SEARCH_TITLE,value=value))
                 for event in events:
                     self.print_event(events)

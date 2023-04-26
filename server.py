@@ -415,22 +415,27 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
 
     '''Searches for events for the user.'''
-    def search_events(self, request, context):
+    def search_event(self, request, context):
+        print("here!!!")
         function = request.function
         value = request.value
 
         if function==SEARCH_ALL_EVENTS:
             # order self.events
+            if len(self.events) == 0:
+                return proto.Event(description = "No user matches this!")
             for event in self.events:
                 yield event
         elif function==SEARCH_USER:
+            print(SEARCH_USER)
             none_found = True
+            print()
             for event in self.events:
                 if event.host==value:
                     none_found=False
                     yield event
             if none_found:
-                yield proto.Text(text = "No user matches this!")
+                yield proto.Event(description = "No user matches this!")
         elif function==SEARCH_TIME:
             print("NOT IMPLEMENTED")
         elif function==SEARCH_TITLE:
@@ -441,7 +446,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     none_found=False
                     yield event
             if none_found:
-                yield proto.Text(text = "No event matches this!")
+                yield proto.Event(description = "No user matches this!")
 
 
     '''Edits an event for the user.'''
