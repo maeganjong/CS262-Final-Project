@@ -31,6 +31,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         self.is_leader = False
         self.backup_connections = {} # len 1 if a backup, len 2 if leader (at start)
         self.other_servers = {} # for logging purposes
+        self.next_event_id = 1
 
         # Sets up logging functionality
         self.setup_logger(f'{PORT1}', f'{PORT1}.log')
@@ -102,10 +103,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             request.text = username
 
             self.replica_client_receive_message(request, None)
-        elif purpose == DELETION_UNSUCCESSFUL:
-            username = parsed_line[1]
-            request = proto.Text()
-            request.text = username
 
             self.delete_account(request, None)
         elif purpose == LOGOUT_SUCCESSFUL:
@@ -295,7 +292,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.accounts.remove(username)
             mutex_accounts.release()
         except:
-            return proto.Text(text=DELETION_UNSUCCESSFUL)
+            return proto.Text(text=ACTION_UNSUCCESSFUL)
 
         # If leader, sync replicas
         if self.is_leader:
@@ -371,6 +368,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         new_events = self.new_event_notifications[username]
         for new_event in new_events:
             formatted_message = proto.Event()
+            formatted_message.id = new_event.id
             formatted_message.host = new_event.host
             formatted_message.title = new_event.title
             formatted_message.starttime = new_event.starttime
@@ -391,7 +389,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         duration = request.duration
         description = request.description
 
-        new_event = Event(host=host, title=title, starttime=starttime, duration=duration, description=description)
+        new_event = Event(id=self.next_event_id, host=host, title=title, starttime=starttime, duration=duration, description=description)
         new_starttime = datetime.datetime.utcfromtimestamp(new_event.starttime)
         new_event_endtime = new_starttime + datetime.timedelta(hours=new_event.duration)
         mutex_events.acquire()
@@ -403,6 +401,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 mutex_events.release()
                 return proto.Text(text=EVENT_CONFLICT)
         self.events.append(new_event)
+        self.next_event_id += 1
         mutex_events.release()
 
         # Update notifications for all accounts
@@ -422,12 +421,33 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Edits an event for the user.'''
     def edit_event(self, request, context):
-        print("NOT IMPLEMENTED")
+        event_id = request.id
+        for event in self.events:
+            print(event_id)
+            print(event.id)
+            if event.id == event_id:
+                mutex_events.acquire()
+                event.title = request.title
+                event.starttime = request.starttime
+                event.duration = request.duration
+                event.description = request.description
+                mutex_events.release()
+                return proto.Text(text=UPDATE_SUCCESSFUL)
+        
+        return proto.Text(text=ACTION_UNSUCCESSFUL)
     
 
     '''Deletes an event for the user.'''
     def delete_event(self, request, context):
-        print("NOT IMPLEMENTED")
+        event_id = request.id
+        for event in self.events:
+            if event.id == event_id:
+                mutex_events.acquire()
+                self.events.remove(event)
+                mutex_events.release()
+                return proto.Text(text=EVENT_DELETED)
+        
+        return proto.Text(text=ACTION_UNSUCCESSFUL)
     
 
 """Class for running server backend functionality."""

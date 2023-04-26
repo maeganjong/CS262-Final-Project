@@ -202,6 +202,15 @@ class CalendarClient:
                 self.find_next_leader()
     
 
+    def print_event(self, event):
+        print(f"[{event.id}] New Event From {event.host}: {event.title}")
+        print(f"Event Description: {event.description}")
+        starttime = datetime.datetime.utcfromtimestamp(event.starttime)
+        endtime = starttime + datetime.timedelta(hours=event.duration)
+        print(f"Starts at: {starttime}")
+        print(f"Ends at: {endtime}")
+
+
     '''Notifies a new event for the user.'''
     def notify_new_event(self):
         done = False
@@ -209,20 +218,14 @@ class CalendarClient:
             try:
                 notifications = self.connection.notify_new_event(proto.Text(text=self.username))
                 for notification in notifications:
-                    print(f"[New Event From {notification.host}]: {notification.title}")
-                    print(f"Event Description: {notification.description}")
-                    starttime = datetime.datetime.utcfromtimestamp(notification.starttime)
-                    endtime = starttime + datetime.timedelta(hours=notification.duration)
-                    print(f"Starts at: {starttime}")
-                    print(f"Ends at: {endtime}")
+                    self.print_event(notification)
                 done = True
             except Exception as e:
+                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
 
-    
-    '''Schedules a new event for the user.'''
-    def schedule_event(self):
+    def prompt_date(self):
         os.system(f'cal')
         year = input("What year would you like your event to start at? (1-9999)\n")
         month = input("What month would you like your event to start at? (1-12)\n")
@@ -230,6 +233,12 @@ class CalendarClient:
         day = input("What day would you like your event to start at?\n")
         hour = input("What hour would you like your event to start at?\n")
         # TODO: SOME ERROR CATCHING
+        return year, month, day, hour
+    
+
+    '''Schedules a new event for the user.'''
+    def schedule_event(self):
+        year, month, day, hour = self.prompt_date()
         duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
         title = input("What would you like to name your event?\n")
         description = input("What would you like to describe your event?\n")
@@ -240,11 +249,7 @@ class CalendarClient:
 
         new_event = proto.Event(host=self.username, title=title, starttime=int(utc_timestamp), duration=int(duration), description=description)
 
-        try:
-            response = self.connection.schedule_event(new_event)
-        except Exception as e:
-            print(e)
-            print("HERE")
+        response = self.connection.schedule_event(new_event)
         print(response.text)
     
 
@@ -261,13 +266,53 @@ class CalendarClient:
 
     '''Edits an event for the user.'''
     def edit_event(self):
-        print("NOT IMPLEMENTED")
+        # TODO: display all events that the user created
+
+        event_id = input("What event would you like to edit? Please enter the event id.\n")
+        try:
+            event_id = int(event_id)
+        except:
+            print("Invalid event id.")
+            return
+        # TODO: check valid event id/permissions and display current event details
+        edit_fields = input("Please enter all fields you'd like to edit. Separate each field with a comma. \n    [s] for start time\n    [d] for duration\n    [t] for title\n    [x] for description\n")
+        if edit_fields == "":
+            print("No fields to edit.")
+            return
+        edit_fields = edit_fields.split(",")
+        updated_event = proto.Event(id=event_id)
+        for field in edit_fields:
+            if field == "s":
+                year, month, day, hour = self.prompt_date()
+                dt = datetime.datetime(int(year), int(month), int(day), int(hour))
+                utc_timestamp = dt.timestamp()
+                updated_event.starttime = int(utc_timestamp)
+            elif field == "d":
+                duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
+                updated_event.duration = int(duration)
+            elif field == "t":
+                title = input("What would you like to name your event?\n")
+                updated_event.title = title
+            elif field == "x":
+                description = input("What would you like to describe your event?\n")
+                updated_event.description = description
+
+        response = self.connection.edit_event(updated_event)
+        print(response)
     
 
     '''Deletes an event for the user.'''
     def delete_event(self):
-        print("NOT IMPLEMENTED")
-
+        # TODO: display all events that the user created
+        event_id = input("What event would you like to delete? Please enter the event id.\n")
+        try:
+            event_id = int(event_id)
+        except:
+            print("Invalid event id.")
+            return
+        # TODO: check valid event id/permissions and display current event details
+        response = self.connection.delete_event(proto.Event(id=event_id))
+        print(response)
 
 
 

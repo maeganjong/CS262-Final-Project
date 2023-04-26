@@ -42,15 +42,15 @@ LOGIN_SUCCESSFUL = "Login successful!"
 REGISTRATION_SUCCESSFUL = "Registration successful!"
 USER_DOES_NOT_EXIST = "User does not exist."
 DELETION_SUCCESSFUL = "Account deleted."
-DELETION_UNSUCCESSFUL = "Account cannot be deleted."
 LOGOUT_SUCCESSFUL = "Logout successful."
-UPDATE_SUCCESSFUL = "Update successful."
 SEND_SUCCESSFUL = "Message sent!"
 
 EVENT_SCHEDULED = "Event scheduled."
 EVENT_CONFLICT = "Event conflicts with already existing events."
-EVENT_EDITED = "Event edited."
+UPDATE_SUCCESSFUL = "Update successful."
 EVENT_DELETED = "Event deleted."
+
+ACTION_UNSUCCESSFUL = "Action Unsuccessful."
 
 # Power transfer purposes
 LEADER_ALIVE = "Leader is alive."
@@ -63,7 +63,8 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 # Event Object
 class Event:
-    def __init__(self, host=None, title=None, starttime=None, duration=None, description=None):
+    def __init__(self, id=None, host=None, title=None, starttime=None, duration=None, description=None):
+        self.id = id
         self.host = host
         self.title = title
         self.starttime = starttime

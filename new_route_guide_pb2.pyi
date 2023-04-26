@@ -9,18 +9,20 @@ class Empty(_message.Message):
     def __init__(self) -> None: ...
 
 class Event(_message.Message):
-    __slots__ = ["description", "duration", "host", "starttime", "title"]
+    __slots__ = ["description", "duration", "host", "id", "starttime", "title"]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     DURATION_FIELD_NUMBER: _ClassVar[int]
     HOST_FIELD_NUMBER: _ClassVar[int]
+    ID_FIELD_NUMBER: _ClassVar[int]
     STARTTIME_FIELD_NUMBER: _ClassVar[int]
     TITLE_FIELD_NUMBER: _ClassVar[int]
     description: str
     duration: int
     host: str
+    id: int
     starttime: int
     title: str
-    def __init__(self, host: _Optional[str] = ..., title: _Optional[str] = ..., starttime: _Optional[int] = ..., duration: _Optional[int] = ..., description: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., host: _Optional[str] = ..., title: _Optional[str] = ..., starttime: _Optional[int] = ..., duration: _Optional[int] = ..., description: _Optional[str] = ...) -> None: ...
 
 class Log(_message.Message):
     __slots__ = ["info", "recipient", "sender"]
