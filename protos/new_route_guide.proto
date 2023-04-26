@@ -24,8 +24,6 @@ service Calendar {
 
     rpc search_events(Search) returns (stream Event) {}
 
-    rpc replica_client_receive_message(Text) returns (Text) {}
-
     rpc log_update(Event) returns (Text) {}
 
     rpc alive_ping(Text) returns (Text) {}

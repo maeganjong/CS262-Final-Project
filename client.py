@@ -39,10 +39,12 @@ class CalendarClient:
 
     '''Finds the next leader when the existing leader was down'''
     def find_next_leader(self):
+        print("FINDING")
         while len(self.replica_addresses) > 0:
             current_leader_server, current_leader_port = self.replica_addresses[0]
             try:
                 self.connection = new_route_guide_pb2_grpc.CalendarStub(grpc.insecure_channel(f"{current_leader_server}:{current_leader_port}"))
+                print("HERE")
                 response = self.connection.alive_ping(proto.Text(text=IS_ALIVE))
                 if response.text == LEADER_ALIVE:
                     # Send message notifying new server that they're the leader

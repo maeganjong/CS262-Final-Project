@@ -69,11 +69,6 @@ class CalendarStub(object):
                 request_serializer=new__route__guide__pb2.Search.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Event.FromString,
                 )
-        self.replica_client_receive_message = channel.unary_unary(
-                '/routeguide.Calendar/replica_client_receive_message',
-                request_serializer=new__route__guide__pb2.Text.SerializeToString,
-                response_deserializer=new__route__guide__pb2.Text.FromString,
-                )
         self.log_update = channel.unary_unary(
                 '/routeguide.Calendar/log_update',
                 request_serializer=new__route__guide__pb2.Event.SerializeToString,
@@ -160,12 +155,6 @@ class CalendarServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def replica_client_receive_message(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def log_update(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -241,11 +230,6 @@ def add_CalendarServicer_to_server(servicer, server):
                     servicer.search_events,
                     request_deserializer=new__route__guide__pb2.Search.FromString,
                     response_serializer=new__route__guide__pb2.Event.SerializeToString,
-            ),
-            'replica_client_receive_message': grpc.unary_unary_rpc_method_handler(
-                    servicer.replica_client_receive_message,
-                    request_deserializer=new__route__guide__pb2.Text.FromString,
-                    response_serializer=new__route__guide__pb2.Text.SerializeToString,
             ),
             'log_update': grpc.unary_unary_rpc_method_handler(
                     servicer.log_update,
@@ -456,23 +440,6 @@ class Calendar(object):
         return grpc.experimental.unary_stream(request, target, '/routeguide.Calendar/search_events',
             new__route__guide__pb2.Search.SerializeToString,
             new__route__guide__pb2.Event.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def replica_client_receive_message(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/replica_client_receive_message',
-            new__route__guide__pb2.Text.SerializeToString,
-            new__route__guide__pb2.Text.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

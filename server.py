@@ -86,25 +86,15 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             request.text = username
 
             self.register_user(request, None)
-        # elif purpose == SEND_SUCCESSFUL:
-        #     sender = parsed_line[1]
-        #     recipient = parsed_line[2]
-        #     message = SEPARATOR.join(parsed_line[3:])
 
-        #     request = proto.Note()
-        #     request.sender = sender
-        #     request.recipient = recipient
-        #     request.message = message
+        # elif purpose == UPDATE_SUCCESSFUL:
+        #     username = parsed_line[1]
+        #     request = proto.Text()
+        #     request.text = username
 
-            self.client_send_message(request, None)
-        elif purpose == UPDATE_SUCCESSFUL:
-            username = parsed_line[1]
-            request = proto.Text()
-            request.text = username
+        #     self.replica_client_receive_message(request, None)
 
-            self.replica_client_receive_message(request, None)
-
-            self.delete_account(request, None)
+        #     self.delete_account(request, None)
         elif purpose == LOGOUT_SUCCESSFUL:
             username = parsed_line[1]
             request = proto.Text()
@@ -127,24 +117,24 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             print("I am the leader")
             connection1 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER2}:{PORT2}"))
             connection2 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER3}:{PORT3}"))
-            self.backup_connections[connection1] = PORT2
-            self.backup_connections[connection2] = PORT3
-            self.other_servers[connection1] = PORT2
-            self.other_servers[connection2] = PORT3
+            self.backup_connections[connection1] = 2
+            self.backup_connections[connection2] = 3
+            self.other_servers[connection1] = 2
+            self.other_servers[connection2] = 3
             
         elif self.id == 2:
             print("I am first backup")
             connection1 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER1}:{PORT1}"))
             connection3 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER3}:{PORT3}"))
-            self.backup_connections[connection3] = PORT3
-            self.other_servers[connection1] = PORT1
-            self.other_servers[connection3] = PORT3
+            self.backup_connections[connection3] = 3
+            self.other_servers[connection1] = 1
+            self.other_servers[connection3] = 3
         else:
             print("I am second backup")
             connection1 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER1}:{PORT1}"))
             connection2 = proto_grpc.CalendarStub(grpc.insecure_channel(f"{SERVER2}:{PORT2}"))
-            self.other_servers[connection1] = PORT1
-            self.other_servers[connection2] = PORT2
+            self.other_servers[connection1] = 1
+            self.other_servers[connection2] = 2
         
         print("Connected to replicas")
 
@@ -163,7 +153,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
     def sync_backups(self):
         # Operates on the assumption that the new leader is the first (of all the backups) to sync with ex-leader
         # Send all accounts to backups
-        new_leader_log_file = f'{self.port}.log'
+        new_leader_log_file = f'{self.id}.log'
         for replica in self.backup_connections:
             replica_log_file = f'{self.backup_connections[replica]}.log'
             
@@ -205,10 +195,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         # Write to logs
         text = LOGIN_SUCCESSFUL + SEPARATOR + username
         try:
-            logger = logging.getLogger(f'{self.port}')
+            logger = logging.getLogger(f'{self.id}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
+                other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
         except Exception as e:
             print("Error logging to other servers")
         
@@ -253,10 +243,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             # Write to logs
             text = REGISTRATION_SUCCESSFUL + SEPARATOR + username
             try:
-                logger = logging.getLogger(f'{self.port}')
+                logger = logging.getLogger(f'{self.id}')
                 logger.info(text)
                 for other in self.other_servers:
-                    other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
+                    other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
             except Exception as e:
                 print("Error logging update")
 
@@ -309,10 +299,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         # Write to logs
         text = DELETION_SUCCESSFUL + SEPARATOR + username
         try:
-            logger = logging.getLogger(f'{self.port}')
+            logger = logging.getLogger(f'{self.id}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
+                other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
         except Exception as e:
             print("Error logging to other servers")
         
@@ -352,10 +342,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         # Write to logs
         text = LOGOUT_SUCCESSFUL + SEPARATOR + username
         try:
-            logger = logging.getLogger(f'{self.port}')
+            logger = logging.getLogger(f'{self.id}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Log(sender=f'{self.port}', recipient="", info=text))
+                other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
         except Exception as e:
             print("Error logging to other servers")
 
