@@ -96,15 +96,15 @@ class CalendarClient:
             self.display_events()
         elif action == "2":
             print("Press 0 to search by user.")
-            print("Press 1 to search by start time.")
-            print("Press 2 to search by description.")
+            # print("Press 1 to search by start time.")
+            print("Press 1 to search by description.")
 
             option = input("What would you like to do?\n")
             if option=="0":
                 self.search_events(option=SEARCH_USER)
             elif option=="1":
-                self.search_events(option=SEARCH_TIME)
-            elif option=="2":
+            #     self.search_events(option=SEARCH_TIME)
+            # elif option=="2":
                 self.search_events(option=SEARCH_DESCRIPTION)
             else:
                 print("Invalid input. Try again.")
@@ -351,7 +351,7 @@ class CalendarClient:
     # TODO: REPLICATION FOR THIS ONE CLEAN THIS UP FIRST!
     '''Searches for events for the user.'''
     def search_events(self, display_all=False, option=None, user=None):
-        # 0 = user, 1 = start time, 2 = description
+        # 0 = user, 1 = description
         if display_all:
             events = self.connection.search_events(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
             for event in events:
@@ -375,11 +375,11 @@ class CalendarClient:
                         break
                     self.print_event(event)
             
-            elif option==SEARCH_TIME:
-                value=input("What's the time you'd like to search by?\n")
-                events = self.connection.search_events(proto.Search(function=SEARCH_TIME,value=value))
-                for event in events:
-                    self.print_event(event)
+            # elif option==SEARCH_TIME:
+            #     value=input("What's the time you'd like to search by?\n")
+            #     events = self.connection.search_events(proto.Search(function=SEARCH_TIME,value=value))
+            #     for event in events:
+            #         self.print_event(event)
             
             elif option==SEARCH_DESCRIPTION:
                 value=input("What's the description you'd like to search by?\n")
