@@ -151,7 +151,6 @@ class CalendarClient:
                 if purpose == "0":
                     response = self.connection.register_user(new_text)
                     # TODO: DISPLAY ALL EVENTS
-                    self.display_menu()
                 elif purpose == "1":
                     response = self.connection.login_user(new_text)
                 
@@ -247,19 +246,83 @@ class CalendarClient:
 
     def prompt_date(self):
         os.system(f'cal')
-        year = input("What year would you like your event to start at? \n")
-        month = input("What month would you like your event to start at? (1-12)\n")
+        leapyear = False
+        done = False
+        while not done:
+            year = input("What year would you like your event to start at? (1 to 9999)\n")
+            try:
+                year = int(year)
+                if not(year >= 1 and year <= 9999):
+                    raise ValueError
+                
+                if ((year % 400 == 0) and (year % 100 == 0)) or ((year % 4 ==0) and (year % 100 != 0)):
+                    leapyear = True
+        
+                done = True
+            except:
+                print("Year not inputted correctly.")
+        
+        done = False
+        while not done:
+            month = input("What month would you like your event to start at? (1-12)\n")
+            try:
+                month = int(month)
+                if not(month >= 1 and month <= 12):
+                    raise ValueError
+                done = True
+            except:
+                print("Month not inputted correctly.")
+      
         os.system(f'cal {month} {year}') # TODO: SOME ERROR CATCHING?
-        day = input("What day would you like your event to start at?\n")
-        hour = input("What hour would you like your event to start at?\n")
-        # TODO: SOME ERROR CATCHING
+
+        done = False
+        while not done:
+            day = input("What day would you like your event to start at?\n")
+            try:
+                day = int(day)
+                if month in [1,3,5,7,8,10,12]:
+                    if not(day >= 1 and day <= 31):
+                        raise ValueError
+                elif month in [4,6,9,11]:
+                    if not(day >= 1 and day <= 30):
+                        raise ValueError
+                elif month == 2:
+                    if leapyear:
+                        if not(day >= 1 and day <= 29):
+                            raise ValueError
+                    else:
+                        if not(day >= 1 and day <= 28):
+                            raise ValueError
+                done = True
+            except:
+                print("Date inputted incorrectly")
+
+        done = False
+        while not done:
+            hour = input("What hour would you like your event to start at? (0-23)\n")
+            try:
+                hour = int(hour)
+                if not(hour >= 0 and hour <= 23):
+                    raise ValueError
+                done = True
+            except:
+                print("Hour inputted incorrectly")
+        
         return year, month, day, hour
     
 
     '''Schedules a new event for the user.'''
     def schedule_event(self):
         year, month, day, hour = self.prompt_date()
-        duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
+        done = False
+        while not done:
+            duration = input("How long would you like your event to last for? Please enter a number in hours.\n")
+            try:
+                duration = int(duration)
+                done = True
+            except:
+                print("Duration inputted incorrectly")
+
         description = input("How would you like to describe your event?\n")
 
         # TODO FINISH THIS STUFF
@@ -298,13 +361,18 @@ class CalendarClient:
             if option==DISPLAY_USER:
                 events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=user))
                 for event in events:
+                    if event.description==NO_USER:
+                        print("You have no events!")
+                        return NO_USER
                     self.print_event(event)
             
             if option==SEARCH_USER:
-                print("here")
                 value=input("What's the user you'd like to search by?\n")
                 events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=value))
                 for event in events:
+                    if event.description==NO_USER:
+                        print(NO_USER)
+                        break
                     self.print_event(event)
             
             elif option==SEARCH_TIME:
@@ -319,26 +387,26 @@ class CalendarClient:
                 for event in events:
                     self.print_event(event)
 
-        print("NOT IMPLEMENTED")
-
 
     '''Edits an event for the user.'''
     def edit_event(self):
         print("These are the events you have permission to edit:")
-        self.search_events(option=DISPLAY_USER, user=self.username)
+        result = self.search_events(option=DISPLAY_USER, user=self.username)
 
-        event_id = input("What event would you like to edit? Please enter the event id.\n")
-        try:
-            event_id = int(event_id)
-        except:
-            print("Invalid event id.")
+        # There's no events for the user to edit
+        if result == NO_USER:
             return
-        # TODO: check valid event id/permissions and display current event details
-        edit_fields = input("Please enter all fields you'd like to edit. Separate each field with a comma. \n    [s] for start time\n    [d] for duration\n    [t] for description\n")
-        if edit_fields == "":
-            print("No fields to edit.")
-            return
-
+        
+        done = False
+        while not done:
+            event_id = input("What event would you like to edit? Please enter the event id.\n")
+            try:
+                event_id = int(event_id)
+                done = True
+            except:
+                print("Invalid event id.")
+                return
+        
         # Checking permissions
         done = False
         while not done:
@@ -357,8 +425,25 @@ class CalendarClient:
                 break
         
         if not event_to_edit:
-            print("You do not have permission to edit this event.")
+            print("You do not have permission to edit this event or this event does not exist.")
             return
+        
+        # TODO: check valid event id/permissions and display current event details
+        done = False
+        while not done:
+            try:
+                edit_fields = input("Please enter all fields you'd like to edit. Separate each field with a comma. \n    [s] for start time\n    [d] for duration\n    [t] for description\n")
+                if edit_fields == "":
+                    print("No fields to edit.")
+
+                test = edit_fields.split(",")
+                for event in test:
+                    if event not in ['s', 'd', 't']:
+                        raise ValueError
+                done = True
+            except:
+                print("Not inputted correctly!")
+
         
         print("Current Event Details:")
         self.print_event(event_to_edit)
@@ -394,7 +479,10 @@ class CalendarClient:
     def delete_event(self):
         # Display all events that the user created
         print("These are the events you have permission to delete:")
-        self.search_events(option=DISPLAY_USER, user=self.username)
+        result = self.search_events(option=DISPLAY_USER, user=self.username)
+
+        if result == NO_USER:
+            return
 
         event_id = input("What event would you like to delete? Please enter the event id.\n")
         try:

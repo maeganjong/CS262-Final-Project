@@ -232,6 +232,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             if self.is_leader:
                 new_text = proto.Text()
                 new_text.text = username
+                print("back up connections: ", self.backup_connections)
                 for replica in self.backup_connections:
                     response = None
                     # Block until backups have been successfully updated
@@ -418,15 +419,14 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             for event in self.events:
                 yield self.convert_event_to_proto(event)
         elif function==SEARCH_USER:
-            print(SEARCH_USER)
             none_found = True
-            print()
             for event in self.events:
-                if event.host==value:
+                x = re.search(value, event.host)
+                if x is not None:
                     none_found=False
                     yield self.convert_event_to_proto(event)
             if none_found:
-                yield proto.Event(description = "No user matches this!")
+                yield proto.Event(description=NO_USER)
         elif function==SEARCH_TIME:
             print("NOT IMPLEMENTED")
         elif function==SEARCH_DESCRIPTION:
@@ -437,7 +437,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     none_found=False
                     yield self.convert_event_to_proto(event)
             if none_found:
-                yield proto.Event(description = "No user matches this!")
+                yield proto.Event(description = "No description matches this!")
 
 
     '''Edits an event for the user.'''

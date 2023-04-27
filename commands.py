@@ -5,9 +5,9 @@ PORT2 = 8051
 PORT3 = 8052
 FORMAT = 'utf-8'
 ## Edit Server below to the hostname of the machine running the server
-SERVER1 = "dhcp-10-250-100-11.harvard.edu" 
+SERVER1 = "dhcp-10-250-15-170.harvard.edu" 
 SERVER2 = "dhcp-10-250-15-170.harvard.edu" 
-SERVER3 = "dhcp-10-250-116-175.harvard.edu" 
+SERVER3 = "dhcp-10-250-15-170.harvard.edu" 
 
 ADDRESS1 = (SERVER1, PORT1)
 ADDRESS2 = (SERVER2, PORT2)
@@ -70,6 +70,7 @@ SEARCH_USER = "give by user"
 SEARCH_TIME = "give by time"
 SEARCH_DESCRIPTION = "give by description"
 DISPLAY_USER = "display by user"
+NO_USER = "No user matches this!"
 
 # Other
 DISCONNECT_MESSAGE = "!DISCONNECT"
