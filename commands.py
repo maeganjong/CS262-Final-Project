@@ -52,6 +52,7 @@ LOGOUT_SUCCESSFUL = "Logout successful."
 SEND_SUCCESSFUL = "Message sent!"
 
 EVENT_SCHEDULED = "Event scheduled."
+EVENT_EDITED = "Event edited."
 EVENT_CONFLICT = "Event conflicts with already existing events."
 UPDATE_SUCCESSFUL = "Update successful."
 EVENT_DELETED = "Event deleted."

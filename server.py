@@ -405,6 +405,28 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 self.new_event_notifications[user].append(new_event)
                 mutex_new_event_notifications.release()
 
+        # If leader, sync replicas
+        if self.is_leader:    
+            print("back up connections: ", self.backup_connections)
+            for replica in self.backup_connections:
+                response = None
+                # Block until backups have been successfully updated
+                try:
+                    response = replica.schedule_event(request)
+                except Exception as e:
+                    print("Backup is down")
+
+        text = EVENT_SCHEDULED + SEPARATOR + host
+        try:
+            logger = logging.getLogger(f'{self.id}')
+            logger.info(text)
+            for other in self.other_servers:
+                print(f"{self.id}")
+                other.log_update(proto.Search(function=f'{self.id}', value=text))
+        except Exception as e:
+            print(e)
+            print("Error logging update")
+
         return proto.Text(text=EVENT_SCHEDULED)
 
 
@@ -453,7 +475,33 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 event.duration = request.duration
                 event.description = request.description
                 mutex_events.release()
+
+                # If leader, sync replicas
+                if self.is_leader:    
+                    print("back up connections: ", self.backup_connections)
+                    for replica in self.backup_connections:
+                        response = None
+                        # Block until backups have been successfully updated
+                        try:
+                            response = replica.edit_event(request)
+                        except Exception as e:
+                            print("Backup is down")
+
+                text = EVENT_EDITED + SEPARATOR + event
+                try:
+                    logger = logging.getLogger(f'{self.id}')
+                    logger.info(text)
+                    for other in self.other_servers:
+                        print(f"{self.id}")
+                        other.log_update(proto.Search(function=f'{self.id}', value=text))
+                except Exception as e:
+                    print(e)
+                    print("Error logging update")
+
+                # Update other servers and then log
                 return proto.Text(text=UPDATE_SUCCESSFUL)
+            
+        # TODO: have the update occur 
         
         return proto.Text(text=ACTION_UNSUCCESSFUL)
     
@@ -466,6 +514,29 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 mutex_events.acquire()
                 self.events.remove(event)
                 mutex_events.release()
+
+                # If leader, sync replicas
+                if self.is_leader:    
+                    print("back up connections: ", self.backup_connections)
+                    for replica in self.backup_connections:
+                        response = None
+                        # Block until backups have been successfully updated
+                        try:
+                            response = replica.delete_event(request)
+                        except Exception as e:
+                            print("Backup is down")
+
+                text = DELETE_EVENT + SEPARATOR + event
+                try:
+                    logger = logging.getLogger(f'{self.id}')
+                    logger.info(text)
+                    for other in self.other_servers:
+                        print(f"{self.id}")
+                        other.log_update(proto.Search(function=f'{self.id}', value=text))
+                except Exception as e:
+                    print(e)
+                    print("Error logging update")
+
                 return proto.Text(text=EVENT_DELETED)
         
         return proto.Text(text=ACTION_UNSUCCESSFUL)
