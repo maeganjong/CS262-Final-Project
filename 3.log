@@ -1,3 +1,10 @@
 Registration successful!: maegan
-Registration successful!: alyssa
+Event scheduled.: maegan
+Event edited.: 1
+!DELETEEVENT: 1
+Event scheduled.: maegan
+Registration successful!: dale
+Event scheduled.: dale
+!DELETEEVENT: 3
+Logout successful.: dale
 Logout successful.: maegan

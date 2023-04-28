@@ -171,7 +171,7 @@ class CalendarClient:
 
     '''Displays username accounts for the user to preview given prompt.'''
     def display_accounts(self):
-        recipient = input("What users would you like to see? Use a regular expression. Enter nothing to skip.\n")
+        recipient = input("What users would you like to see? Use a regular expression. Enter nothing to view all.\n")
         new_text = proto.Text()
         new_text.text = recipient
         print("\nUsers:")

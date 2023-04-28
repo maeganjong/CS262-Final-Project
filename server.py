@@ -487,7 +487,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         except Exception as e:
                             print("Backup is down")
 
-                text = EVENT_EDITED + SEPARATOR + event
+                text = EVENT_EDITED + SEPARATOR + str(event_id)
                 try:
                     logger = logging.getLogger(f'{self.id}')
                     logger.info(text)
@@ -526,7 +526,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         except Exception as e:
                             print("Backup is down")
 
-                text = DELETE_EVENT + SEPARATOR + event
+                text = DELETE_EVENT + SEPARATOR + str(event_id)
                 try:
                     logger = logging.getLogger(f'{self.id}')
                     logger.info(text)
