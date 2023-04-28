@@ -57,8 +57,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Server sends its log writes to other replicas so all machines have same set of log files'''
     def log_update(self, request, context):
-        machine = request.sender
-        log_message = request.message
+        machine = request.function
+        log_message = request.value
         logger = logging.getLogger(machine)
         logger.info(log_message)
         return proto.Text(text="Done")
@@ -198,7 +198,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             logger = logging.getLogger(f'{self.id}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
+                other.log_update(proto.Search(function=f'{self.id}', value=text))
         except Exception as e:
             print("Error logging to other servers")
         
@@ -247,8 +247,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 logger = logging.getLogger(f'{self.id}')
                 logger.info(text)
                 for other in self.other_servers:
-                    other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
+                    print(f"{self.id}")
+                    other.log_update(proto.Search(function=f'{self.id}', value=text))
             except Exception as e:
+                print(e)
                 print("Error logging update")
 
             return proto.Text(text=LOGIN_SUCCESSFUL)
@@ -303,7 +305,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             logger = logging.getLogger(f'{self.id}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
+                other.log_update(proto.Search(function=f'{self.id}', value=text))
         except Exception as e:
             print("Error logging to other servers")
         
@@ -346,7 +348,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             logger = logging.getLogger(f'{self.id}')
             logger.info(text)
             for other in self.other_servers:
-                other.log_update(proto.Log(sender=f'{self.id}', recipient="", info=text))
+                other.log_update(proto.Search(function=f'{self.id}', value=text))
         except Exception as e:
             print("Error logging to other servers")
 

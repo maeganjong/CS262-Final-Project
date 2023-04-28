@@ -71,7 +71,7 @@ class CalendarStub(object):
                 )
         self.log_update = channel.unary_unary(
                 '/routeguide.Calendar/log_update',
-                request_serializer=new__route__guide__pb2.Event.SerializeToString,
+                request_serializer=new__route__guide__pb2.Search.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Text.FromString,
                 )
         self.alive_ping = channel.unary_unary(
@@ -233,7 +233,7 @@ def add_CalendarServicer_to_server(servicer, server):
             ),
             'log_update': grpc.unary_unary_rpc_method_handler(
                     servicer.log_update,
-                    request_deserializer=new__route__guide__pb2.Event.FromString,
+                    request_deserializer=new__route__guide__pb2.Search.FromString,
                     response_serializer=new__route__guide__pb2.Text.SerializeToString,
             ),
             'alive_ping': grpc.unary_unary_rpc_method_handler(
@@ -455,7 +455,7 @@ class Calendar(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/log_update',
-            new__route__guide__pb2.Event.SerializeToString,
+            new__route__guide__pb2.Search.SerializeToString,
             new__route__guide__pb2.Text.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
