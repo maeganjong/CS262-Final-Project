@@ -88,9 +88,9 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.register_user(request, None)
         
         elif purpose == EVENT_EDITED:
-            id = parsed_line[1]
-            starttime = parsed_line[2]
-            duration = parsed_line[3]
+            id = int(parsed_line[1])
+            starttime = int(parsed_line[2])
+            duration = int(parsed_line[3])
             description = parsed_line[4]
 
             request = proto.Event()
@@ -103,8 +103,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         elif purpose == EVENT_SCHEDULED:
             host = parsed_line[1]
-            starttime = parsed_line[2]
-            duration = parsed_line[3]
+            starttime = int(parsed_line[2])
+            duration = int(parsed_line[3])
             description = parsed_line[4]
 
             request = proto.Event()
@@ -116,7 +116,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.schedule_event(request, None)
 
         elif purpose == EVENT_DELETED:
-            event_id = parsed_line[1]
+            event_id = int(parsed_line[1])
             request = proto.Event()
             request.id = event_id
 
