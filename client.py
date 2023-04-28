@@ -450,6 +450,9 @@ class CalendarClient:
 
         edit_fields = edit_fields.split(",")
         updated_event = proto.Event(id=event_id)
+        updated_event.starttime = event_to_edit.starttime
+        updated_event.duration = event_to_edit.duration
+        updated_event.description = event_to_edit.description
         for field in edit_fields:
             if field == "s":
                 year, month, day, hour = self.prompt_date()
