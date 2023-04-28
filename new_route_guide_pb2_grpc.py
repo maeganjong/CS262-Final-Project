@@ -84,6 +84,11 @@ class CalendarStub(object):
                 request_serializer=new__route__guide__pb2.Text.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Text.FromString,
                 )
+        self.process_line = channel.unary_unary(
+                '/routeguide.Calendar/process_line',
+                request_serializer=new__route__guide__pb2.Text.SerializeToString,
+                response_deserializer=new__route__guide__pb2.Text.FromString,
+                )
 
 
 class CalendarServicer(object):
@@ -173,6 +178,12 @@ class CalendarServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def process_line(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_CalendarServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -243,6 +254,11 @@ def add_CalendarServicer_to_server(servicer, server):
             ),
             'notify_leader': grpc.unary_unary_rpc_method_handler(
                     servicer.notify_leader,
+                    request_deserializer=new__route__guide__pb2.Text.FromString,
+                    response_serializer=new__route__guide__pb2.Text.SerializeToString,
+            ),
+            'process_line': grpc.unary_unary_rpc_method_handler(
+                    servicer.process_line,
                     request_deserializer=new__route__guide__pb2.Text.FromString,
                     response_serializer=new__route__guide__pb2.Text.SerializeToString,
             ),
@@ -489,6 +505,23 @@ class Calendar(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/notify_leader',
+            new__route__guide__pb2.Text.SerializeToString,
+            new__route__guide__pb2.Text.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def process_line(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/process_line',
             new__route__guide__pb2.Text.SerializeToString,
             new__route__guide__pb2.Text.FromString,
             options, channel_credentials,

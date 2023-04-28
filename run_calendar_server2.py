@@ -2,7 +2,7 @@ from server import *
 
 replica_id, address = REPLICA_IDS[1]
 calendar_server = ServerRunner(id=replica_id, address=address)
-print("[STARTING] lead server is starting...")
+print("[STARTING] backup server is starting...")
 calendar_server.start()
 
 calendar_server.connect_to_replicas()

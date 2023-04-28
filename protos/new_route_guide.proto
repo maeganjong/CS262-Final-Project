@@ -28,6 +28,8 @@ service Calendar {
 
     rpc alive_ping(Text) returns (Text) {}
     rpc notify_leader(Text) returns (Text) {}
+
+    rpc process_line(Text) returns (Text) {}
 }
 
 message Search {

@@ -41,6 +41,7 @@ class CalendarClient:
     def find_next_leader(self):
         print("FINDING")
         while len(self.replica_addresses) > 0:
+            print(self.replica_addresses)
             current_leader_server, current_leader_port = self.replica_addresses[0]
             try:
                 self.connection = new_route_guide_pb2_grpc.CalendarStub(grpc.insecure_channel(f"{current_leader_server}:{current_leader_port}"))
@@ -49,6 +50,7 @@ class CalendarClient:
                 if response.text == LEADER_ALIVE:
                     # Send message notifying new server that they're the leader
                     confirmation = self.connection.notify_leader(proto.Text(text=LEADER_NOTIFICATION))
+                    print(confirmation)
                     if confirmation.text == LEADER_CONFIRMATION:
                         print("SWITCHING REPLICAS")
                         return
@@ -58,6 +60,8 @@ class CalendarClient:
             except Exception as e:
                 # TODO REMOVE PRINT LATER
                 print(e)
+                print("I AM HERE")
+                print(self.replica_addresses)
                 # Remove current leader from list of ports
                 self.replica_addresses.pop(0)
         
@@ -374,12 +378,6 @@ class CalendarClient:
                         print(NO_USER)
                         break
                     self.print_event(event)
-            
-            # elif option==SEARCH_TIME:
-            #     value=input("What's the time you'd like to search by?\n")
-            #     events = self.connection.search_events(proto.Search(function=SEARCH_TIME,value=value))
-            #     for event in events:
-            #         self.print_event(event)
             
             elif option==SEARCH_DESCRIPTION:
                 value=input("What's the description you'd like to search by?\n")

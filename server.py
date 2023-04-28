@@ -62,6 +62,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         logger = logging.getLogger(machine)
         logger.info(log_message)
         return proto.Text(text="Done")
+
         
     '''Processes log files for starting the persistence server'''
     # TODO: CHANGE THIS!!
@@ -93,13 +94,15 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             duration = int(parsed_line[3])
             description = parsed_line[4]
 
+            print(description)
+
             request = proto.Event()
             request.id = id
             request.description = description
             request.starttime = starttime
             request.duration = duration
 
-            self.schedule_event(request, None)
+            self.edit_event(request, None)
 
         elif purpose == EVENT_SCHEDULED:
             host = parsed_line[1]
@@ -122,14 +125,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
             self.delete_event(request, None)
 
-        # elif purpose == UPDATE_SUCCESSFUL:
-        #     username = parsed_line[1]
-        #     request = proto.Text()
-        #     request.text = username
-
-        #     self.replica_client_receive_message(request, None)
-
-        #     self.delete_account(request, None)
         elif purpose == LOGOUT_SUCCESSFUL:
             username = parsed_line[1]
             request = proto.Text()
@@ -156,6 +151,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.backup_connections[connection2] = 3
             self.other_servers[connection1] = 2
             self.other_servers[connection2] = 3
+
             
         elif self.id == 2:
             print("I am first backup")
@@ -171,7 +167,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.other_servers[connection1] = 1
             self.other_servers[connection2] = 2
         
-        print("Connected to replicas")
+        print("Replica communication channels established.")
 
     '''Determines whether server being pinged is alive and can respond.'''
     def alive_ping(self, request, context):
@@ -195,10 +191,16 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             lines1 = list(open(new_leader_log_file, "r"))
             lines2 = list(open(replica_log_file, "r"))
 
-            if len(lines1) != len(lines2):
+            print(lines1)
+            print(lines2)
+
+            if len(lines1) > len(lines2):
                 # Not synced; lines1 must have more lines
                 for unsynced_line in lines1[len(lines2):]:
-                    self.process_line(unsynced_line)
+                    try:
+                        replica.process_line(unsynced_line)
+                    except Exception as e:
+                        print("Error syncing backups")
 
     '''Logins the user by checking the list of accounts stored in the server session.'''
     def login_user(self, request, context):
@@ -413,6 +415,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Schedules a new event for the user.'''
     def schedule_event(self, request, context):
+        print("Scheduling event")
         host = request.host
         starttime = request.starttime
         duration = request.duration
@@ -604,99 +607,3 @@ class ServerRunner:
     def stop(self):
         self.server.stop(grace=None)
         self.thread_pool.shutdown(wait=False)
-
-
-
-"""
-'''Handles the clients receiving messages sent to them. Delivers the message to the clients then clears sent messages'''
-    def client_receive_message(self, request, context):
-        lastindex = 0
-        recipient = request.text
-
-        # Write to logs
-        text = UPDATE_SUCCESSFUL + SEPARATOR + recipient
-        try:
-            logger = logging.getLogger(f'{self.port}')
-            logger.info(text)
-            for other in self.other_servers:
-                other.log_update(new_route_guide_pb2.Note(sender=f'{self.port}', recipient="", message=text))
-        except Exception as e:
-            print("Error logging update")
-
-        mutex_unsent_messages.acquire()
-        while len(self.unsent_messages[recipient]) > lastindex:
-            sender, message = self.unsent_messages[recipient][lastindex]
-            lastindex += 1
-            formatted_message = new_route_guide_pb2.Note()
-            formatted_message.recipient = recipient
-            formatted_message.sender = sender
-            formatted_message.message = message
-            yield formatted_message
-        mutex_unsent_messages.release()
-        self.unsent_messages[recipient] = []
-
-        # If leader, sync replicas
-        if self.is_leader:
-            print("Updating backups...")
-            for connection in self.backup_connections:
-                try:
-                    response = connection.replica_client_receive_message(request)
-                    if response.text != UPDATE_SUCCESSFUL:
-                        print("error with update backup")
-                except Exception as e:
-                    print("Backup is down")
-
-        return new_route_guide_pb2.Text(text=UPDATE_SUCCESSFUL)
-    
-    '''Replica handles the clients receiving messages sent to them. Updates the message states of the backups.'''
-    def replica_client_receive_message(self, request, context):
-        recipient = request.text
-        mutex_unsent_messages.acquire()
-        self.unsent_messages[recipient] = []
-        mutex_unsent_messages.release()
-        
-        # Write to logs
-        text = UPDATE_SUCCESSFUL + SEPARATOR + recipient
-        try:
-            logger = logging.getLogger(f'{self.port}')
-            logger.info(text)
-            for other in self.other_servers:
-                other.log_update(new_route_guide_pb2.Note(sender=f'{self.port}', recipient="", message=text))
-        except Exception as e:
-            print("Error logging to other servers")
-        
-        return new_route_guide_pb2.Text(text=UPDATE_SUCCESSFUL)
-
-    '''Handles the clients sending messages to other clients'''
-    def client_send_message(self, request, context):
-        recipient = request.recipient
-        sender = request.sender
-        message = request.message
-        mutex_unsent_messages.acquire()
-        self.unsent_messages[recipient].append((sender, message))
-        mutex_unsent_messages.release()
-
-        # If leader, sync replicas
-        if self.is_leader:
-            new_message = new_route_guide_pb2.Note()
-            new_message.sender = sender
-            new_message.recipient = recipient
-            new_message.message = message
-            for replica in self.backup_connections:
-                response = None
-                # Block until backups have been successfully updated
-                try:
-                    response = replica.client_send_message(new_message)
-                except Exception as e:
-                    print("Backup is down")
-        
-        # Write to logs
-        text = SEND_SUCCESSFUL + SEPARATOR + sender + SEPARATOR + recipient + SEPARATOR + message
-        try:
-            logger = logging.getLogger(f'{self.port}')
-            logger.info(text)
-            for other in self.other_servers:
-                other.log_update(new_route_guide_pb2.Note(sender=f'{self.port}', recipient="", message=text))
-        except Exception as e:
-            print("Error logging to other servers")
-        return new_route_guide_pb2.Text(text=SEND_SUCCESSFUL)"""
