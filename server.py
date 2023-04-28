@@ -86,6 +86,41 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             request.text = username
 
             self.register_user(request, None)
+        
+        elif purpose == EVENT_EDITED:
+            id = parsed_line[1]
+            starttime = parsed_line[2]
+            duration = parsed_line[3]
+            description = parsed_line[4]
+
+            request = proto.Event()
+            request.id = id
+            request.description = description
+            request.starttime = starttime
+            request.duration = duration
+
+            self.schedule_event(request, None)
+
+        elif purpose == EVENT_SCHEDULED:
+            host = parsed_line[1]
+            starttime = parsed_line[2]
+            duration = parsed_line[3]
+            description = parsed_line[4]
+
+            request = proto.Event()
+            request.host = host
+            request.description = description
+            request.starttime = starttime
+            request.duration = duration
+
+            self.schedule_event(request, None)
+
+        elif purpose == EVENT_DELETED:
+            event_id = parsed_line[1]
+            request = proto.Event()
+            request.id = event_id
+
+            self.delete_event(request, None)
 
         # elif purpose == UPDATE_SUCCESSFUL:
         #     username = parsed_line[1]
@@ -382,7 +417,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         starttime = request.starttime
         duration = request.duration
         description = request.description
-
         new_event = Event(id=self.next_event_id, host=host, starttime=starttime, duration=duration, description=description)
         new_starttime = datetime.datetime.utcfromtimestamp(new_event.starttime)
         new_event_endtime = new_starttime + datetime.timedelta(hours=new_event.duration)
@@ -416,7 +450,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 except Exception as e:
                     print("Backup is down")
 
-        text = EVENT_SCHEDULED + SEPARATOR + host
+        text = EVENT_SCHEDULED + SEPARATOR + host + SEPARATOR + str(starttime) + SEPARATOR + str(duration) + SEPARATOR + description
         try:
             logger = logging.getLogger(f'{self.id}')
             logger.info(text)
@@ -487,7 +521,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         except Exception as e:
                             print("Backup is down")
 
-                text = EVENT_EDITED + SEPARATOR + str(event_id)
+                text = EVENT_EDITED + SEPARATOR + str(event_id) + SEPARATOR + str(request.starttime) + SEPARATOR + str(request.duration) + SEPARATOR + request.description
                 try:
                     logger = logging.getLogger(f'{self.id}')
                     logger.info(text)
