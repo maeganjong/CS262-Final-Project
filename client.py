@@ -223,7 +223,7 @@ class CalendarClient:
         print("--------------------------------------------------")
         print(f"[{event.id}] Event By {event.host}")
         print(f"Event Description: {event.description}")
-        starttime = datetime.datetime.utcfromtimestamp(event.starttime)
+        starttime = datetime.datetime.fromtimestamp(event.starttime)
         endtime = starttime + datetime.timedelta(hours=event.duration)
         print(f"Starts at: {starttime}")
         print(f"Ends at: {endtime}")
