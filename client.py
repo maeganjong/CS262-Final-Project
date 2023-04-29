@@ -413,7 +413,7 @@ class CalendarClient:
         result = self.search_events(option=DISPLAY_USER, user=self.username)
 
         # There's no events for the user to edit
-        if result == NO_USER:
+        if result == NO_MATCH:
             return
         
         done = False
@@ -503,7 +503,7 @@ class CalendarClient:
         print("These are the events you have permission to delete:")
         result = self.search_events(option=DISPLAY_USER, user=self.username)
 
-        if result == NO_USER:
+        if result == NO_MATCH:
             return
 
         event_id = input("What event would you like to delete? Please enter the event id.\n")
