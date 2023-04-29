@@ -39,13 +39,11 @@ class CalendarClient:
 
     '''Finds the next leader when the existing leader was down'''
     def find_next_leader(self):
-        print("FINDING")
         while len(self.replica_addresses) > 0:
             print(self.replica_addresses)
             current_leader_server, current_leader_port = self.replica_addresses[0]
             try:
                 self.connection = new_route_guide_pb2_grpc.CalendarStub(grpc.insecure_channel(f"{current_leader_server}:{current_leader_port}"))
-                print("HERE")
                 response = self.connection.alive_ping(proto.Text(text=IS_ALIVE))
                 if response.text == LEADER_ALIVE:
                     # Send message notifying new server that they're the leader
@@ -59,9 +57,7 @@ class CalendarClient:
                 self.replica_addresses.pop(0)
             except Exception as e:
                 # TODO REMOVE PRINT LATER
-                print(e)
                 print("I AM HERE")
-                print(self.replica_addresses)
                 # Remove current leader from list of ports
                 self.replica_addresses.pop(0)
         
@@ -352,38 +348,63 @@ class CalendarClient:
         self.search_events(display_all=True)
     
 
-    # TODO: REPLICATION FOR THIS ONE CLEAN THIS UP FIRST!
     '''Searches for events for the user.'''
     def search_events(self, display_all=False, option=None, user=None):
         # 0 = user, 1 = description
+        done = False
+        events = []
         if display_all:
-            events = self.connection.search_events(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
-            for event in events:
-                self.print_event(event)
+            while not done:
+                try:
+                    events = self.connection.search_events(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
+                    done = True
+                except Exception as e:
+                    print(e)
+                    print("JELFJKSFJLK?")
+                    # Power transfer to a backup replica
+                    self.find_next_leader()
             
         else:
             if option==DISPLAY_USER:
-                events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=user))
-                for event in events:
-                    if event.description==NO_USER:
-                        print("You have no events!")
-                        return NO_USER
-                    self.print_event(event)
+                while not done:
+                    try:
+                        events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=user))
+                        done = True
+                    except Exception as e:
+                        print(e)
+                        # Power transfer to a backup replica
+                        self.find_next_leader()
             
             if option==SEARCH_USER:
                 value=input("What's the user you'd like to search by?\n")
-                events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=value))
-                for event in events:
-                    if event.description==NO_USER:
-                        print(NO_USER)
-                        break
-                    self.print_event(event)
+                while not done:
+                    try:
+                        events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=value))
+                        done = True
+                    except Exception as e:
+                        print(e)
+                        # Power transfer to a backup replica
+                        self.find_next_leader()
             
             elif option==SEARCH_DESCRIPTION:
                 value=input("What's the description you'd like to search by?\n")
-                events = self.connection.search_events(proto.Search(function=SEARCH_DESCRIPTION,value=value))
-                for event in events:
-                    self.print_event(event)
+                while not done:
+                    try:
+                        events = self.connection.search_events(proto.Search(function=SEARCH_DESCRIPTION,value=value))
+                        done = True
+                    except Exception as e:
+                        print(e)
+                        # Power transfer to a backup replica
+                        self.find_next_leader()
+        try:
+            for event in events:
+                if event.returntext==NO_MATCH:
+                    print(NO_MATCH)
+                    return
+                self.print_event(event)
+        except Exception as e:
+            # TODO: i don't know why we need this but it makes this work??
+            print("why are we here?")
 
 
     '''Edits an event for the user.'''

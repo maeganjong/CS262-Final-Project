@@ -47,6 +47,7 @@ message Event {
     string description = 3;
     int64 starttime = 4;
     int64 duration = 5;
+    string returntext = 6;
 }
 
 message Empty {}

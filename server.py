@@ -27,7 +27,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         self.accounts = [] # Usernames of all accounts
         self.active_accounts = [] # Username of all accounts that are currently logged in
         self.new_event_notifications = {} # {username: [event1, event2, event3]}
-        self.events = [] # [event1, event2, event3]
+        self.public_events = [] # [event1, event2, event3]
 
         self.is_leader = False
         self.backup_connections = {} # len 1 if a backup, len 2 if leader (at start)
@@ -93,8 +93,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             starttime = int(parsed_line[2])
             duration = int(parsed_line[3])
             description = parsed_line[4]
-
-            print(description)
 
             request = proto.Event()
             request.id = id
@@ -190,9 +188,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             
             lines1 = list(open(new_leader_log_file, "r"))
             lines2 = list(open(replica_log_file, "r"))
-
-            print(lines1)
-            print(lines2)
 
             if len(lines1) > len(lines2):
                 # Not synced; lines1 must have more lines
@@ -313,8 +308,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             del self.new_event_notifications[username]
             mutex_new_event_notifications.release()
 
-            # Delete all events created by this user
-            for event in self.events:
+            # Delete all public events created by this user
+            for event in self.public_events:
                 if event.host == username:
                     self.delete_event(event)
 
@@ -424,14 +419,14 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         new_starttime = datetime.datetime.utcfromtimestamp(new_event.starttime)
         new_event_endtime = new_starttime + datetime.timedelta(hours=new_event.duration)
         mutex_events.acquire()
-        for event in self.events:
+        for event in self.public_events:
             event_starttime = datetime.datetime.utcfromtimestamp(event.starttime)
             event_endtime = event_starttime + datetime.timedelta(hours=event.duration)
             if not (new_event_endtime <= event_starttime or event_endtime <= new_starttime):
                 # TODO: CHECK THIS LATER
                 mutex_events.release()
                 return proto.Text(text=EVENT_CONFLICT)
-        self.events.append(new_event)
+        self.public_events.append(new_event)
         self.next_event_id += 1
         mutex_events.release()
 
@@ -469,43 +464,42 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Searches for events for the user.'''
     def search_events(self, request, context):
-        print("here!!!")
         function = request.function
         value = request.value
 
         if function==SEARCH_ALL_EVENTS:
-            # TODO: order self.events
-            if len(self.events) == 0:
-                return proto.Event(description = "No events to display.")
-            for event in self.events:
+            # TODO: order self.public_events
+            if len(self.public_events) == 0:
+                return proto.Event(returntext=NO_MATCH)
+            for event in self.public_events:
                 yield self.convert_event_to_proto(event)
         elif function==SEARCH_USER:
             none_found = True
-            for event in self.events:
+            for event in self.public_events:
                 x = re.search(value, event.host)
                 if x is not None:
                     none_found=False
                     yield self.convert_event_to_proto(event)
             if none_found:
-                yield proto.Event(description=NO_USER)
+                yield proto.Event(returntext=NO_MATCH)
         elif function==SEARCH_TIME:
             print("NOT IMPLEMENTED")
         elif function==SEARCH_DESCRIPTION:
             none_found = True
-            for event in self.events:
+            for event in self.public_events:
                 x = re.search(value, event.description)
                 if x is not None:
                     none_found=False
                     yield self.convert_event_to_proto(event)
             if none_found:
-                yield proto.Event(description = "No description matches this!")
+                yield proto.Event(returntext=NO_MATCH)
 
 
     '''Edits an event for the user.'''
     def edit_event(self, request, context):
         # TODO: check for conflicts later
         event_id = request.id
-        for event in self.events:
+        for event in self.public_events:
             if event.id == event_id:
                 mutex_events.acquire()
                 event.starttime = request.starttime
@@ -546,10 +540,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
     '''Deletes an event for the user.'''
     def delete_event(self, request, context):
         event_id = request.id
-        for event in self.events:
+        for event in self.public_events:
             if event.id == event_id:
                 mutex_events.acquire()
-                self.events.remove(event)
+                self.public_events.remove(event)
                 mutex_events.release()
 
                 # If leader, sync replicas
