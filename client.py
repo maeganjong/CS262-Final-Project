@@ -79,22 +79,25 @@ class CalendarClient:
     def display_menu(self):
         # TODO: MAYBE CHANGE THIS UI IDK?
         print()
-        print("Press 0 to schedule a new event.")
-        print("Press 1 to see all current events.")
-        print("Press 2 to search for events.")
-        print("Press 3 to edit an event.")
-        print("Press 4 to delete an event.")
-        print("Press 5 to see all users.")
-        print("Press 6 to logout.")
-        print("Press 7 to delete your account.")
+        print("Press 0 to schedule a new public event.")
+        print("Press 1 to schedule a new private event.")
+        print("Press 2 to see all current events.")
+        print("Press 3 to search for events.")
+        print("Press 4 to edit an event.")
+        print("Press 5 to delete an event.")
+        print("Press 6 to see all users.")
+        print("Press 7 to logout.")
+        print("Press 8 to delete your account.")
         print()
 
         action = input("What would you like to do?\n")
         if action == "0":
             self.schedule_event()
-        elif action == "1":
-            self.display_events()
+        if action == "1":
+            self.schedule_event(public=False)
         elif action == "2":
+            self.display_events()
+        elif action == "3":
             print("Press 0 to search by user.")
             # print("Press 1 to search by start time.")
             print("Press 1 to search by description.")
@@ -108,15 +111,15 @@ class CalendarClient:
                 self.search_events(option=SEARCH_DESCRIPTION)
             else:
                 print("Invalid input. Try again.")
-        elif action == "3":
-            self.edit_event()
         elif action == "4":
-            self.delete_event()
+            self.edit_event()
         elif action == "5":
-            self.display_accounts()
+            self.delete_event()
         elif action == "6":
-            self.logout()
+            self.display_accounts()
         elif action == "7":
+            self.logout()
+        elif action == "8":
             self.delete_account()
         else:
             print("Invalid input. Try again.")
@@ -223,6 +226,7 @@ class CalendarClient:
         print("--------------------------------------------------")
         print(f"[{event.id}] Event By {event.host}")
         print(f"Event Description: {event.description}")
+        print(f"Guest List: {event.guestlist}")
         starttime = datetime.datetime.fromtimestamp(event.starttime)
         endtime = starttime + datetime.timedelta(hours=event.duration)
         print(f"Starts at: {starttime}")
@@ -312,7 +316,7 @@ class CalendarClient:
     
 
     '''Schedules a new event for the user.'''
-    def schedule_event(self):
+    def schedule_event(self, public=True):
         year, month, day, hour = self.prompt_date()
         done = False
         while not done:
@@ -331,14 +335,55 @@ class CalendarClient:
 
         new_event = proto.Event(host=self.username, starttime=int(utc_timestamp), duration=int(duration), description=description)
 
+        if public:
+            self.schedule_public_event(new_event)
+        else:
+            self.schedule_private_event(new_event)
+
+    def schedule_public_event(self, new_event):
         done = False
         while not done:
             try:
-                response = self.connection.schedule_event(new_event)
+                response = self.connection.schedule_public_event(new_event)
                 print(response.text)
                 done = True
             except Exception as e:
                 print(e)
+                # Power transfer to a backup replica
+                self.find_next_leader()
+    
+    def schedule_private_event(self, new_event):
+        guestlist = input("Who would you like to invite to your event? Please enter a list of usernames separated by commas.\n")
+        guestlist = guestlist.split(",")
+        clean_guestlist = []
+        for guest in guestlist:
+            guest = guest.strip()
+            done = False
+            while not done:
+                try:
+                    valid = self.connection.check_user_exists(proto.Text(text=guest))
+                    done = True
+                except Exception as e:
+                    # Power transfer to a backup replica
+                    self.find_next_leader()
+            if not valid:
+                print(f"{guest} is not a valid user.")
+            else:
+                clean_guestlist.append(guest)
+        
+        if len(clean_guestlist) == 0:
+            print("No valid users were entered. Event will not be scheduled.")
+            return
+
+        new_event.guestlist = ', '.join(clean_guestlist)
+        
+        done = False
+        while not done:
+            try:
+                response = self.connection.schedule_private_event(new_event)
+                print(response.text)
+                done = True
+            except Exception as e:
                 # Power transfer to a backup replica
                 self.find_next_leader()
     

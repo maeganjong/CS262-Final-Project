@@ -9,20 +9,22 @@ class Empty(_message.Message):
     def __init__(self) -> None: ...
 
 class Event(_message.Message):
-    __slots__ = ["description", "duration", "host", "id", "returntext", "starttime"]
+    __slots__ = ["description", "duration", "guestlist", "host", "id", "returntext", "starttime"]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     DURATION_FIELD_NUMBER: _ClassVar[int]
+    GUESTLIST_FIELD_NUMBER: _ClassVar[int]
     HOST_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     RETURNTEXT_FIELD_NUMBER: _ClassVar[int]
     STARTTIME_FIELD_NUMBER: _ClassVar[int]
     description: str
     duration: int
+    guestlist: str
     host: str
     id: int
     returntext: str
     starttime: int
-    def __init__(self, id: _Optional[int] = ..., host: _Optional[str] = ..., description: _Optional[str] = ..., starttime: _Optional[int] = ..., duration: _Optional[int] = ..., returntext: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., host: _Optional[str] = ..., description: _Optional[str] = ..., starttime: _Optional[int] = ..., duration: _Optional[int] = ..., guestlist: _Optional[str] = ..., returntext: _Optional[str] = ...) -> None: ...
 
 class Search(_message.Message):
     __slots__ = ["function", "value"]

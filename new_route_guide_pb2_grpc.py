@@ -49,8 +49,13 @@ class CalendarStub(object):
                 request_serializer=new__route__guide__pb2.Text.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Event.FromString,
                 )
-        self.schedule_event = channel.unary_unary(
-                '/routeguide.Calendar/schedule_event',
+        self.schedule_public_event = channel.unary_unary(
+                '/routeguide.Calendar/schedule_public_event',
+                request_serializer=new__route__guide__pb2.Event.SerializeToString,
+                response_deserializer=new__route__guide__pb2.Text.FromString,
+                )
+        self.schedule_private_event = channel.unary_unary(
+                '/routeguide.Calendar/schedule_private_event',
                 request_serializer=new__route__guide__pb2.Event.SerializeToString,
                 response_deserializer=new__route__guide__pb2.Text.FromString,
                 )
@@ -136,7 +141,13 @@ class CalendarServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def schedule_event(self, request, context):
+    def schedule_public_event(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def schedule_private_event(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -222,8 +233,13 @@ def add_CalendarServicer_to_server(servicer, server):
                     request_deserializer=new__route__guide__pb2.Text.FromString,
                     response_serializer=new__route__guide__pb2.Event.SerializeToString,
             ),
-            'schedule_event': grpc.unary_unary_rpc_method_handler(
-                    servicer.schedule_event,
+            'schedule_public_event': grpc.unary_unary_rpc_method_handler(
+                    servicer.schedule_public_event,
+                    request_deserializer=new__route__guide__pb2.Event.FromString,
+                    response_serializer=new__route__guide__pb2.Text.SerializeToString,
+            ),
+            'schedule_private_event': grpc.unary_unary_rpc_method_handler(
+                    servicer.schedule_private_event,
                     request_deserializer=new__route__guide__pb2.Event.FromString,
                     response_serializer=new__route__guide__pb2.Text.SerializeToString,
             ),
@@ -392,7 +408,7 @@ class Calendar(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def schedule_event(request,
+    def schedule_public_event(request,
             target,
             options=(),
             channel_credentials=None,
@@ -402,7 +418,24 @@ class Calendar(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/schedule_event',
+        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/schedule_public_event',
+            new__route__guide__pb2.Event.SerializeToString,
+            new__route__guide__pb2.Text.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def schedule_private_event(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/routeguide.Calendar/schedule_private_event',
             new__route__guide__pb2.Event.SerializeToString,
             new__route__guide__pb2.Text.FromString,
             options, channel_credentials,

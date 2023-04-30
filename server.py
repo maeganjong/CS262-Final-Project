@@ -27,7 +27,12 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         self.accounts = [] # Usernames of all accounts
         self.active_accounts = [] # Username of all accounts that are currently logged in
         self.new_event_notifications = {} # {username: [event1, event2, event3]}
+
+        # three event-related databases that follow will be guarded by mutex_events (only one edit to all events at a time)
         self.public_events = [] # [event1, event2, event3]
+        self.private_events = [] # [event1, event2, event3]
+        # maps username to list of private events they are a part of
+        self.private_mappings = {} # {username: [event_id1, event_id2, event_id3]}
 
         self.is_leader = False
         self.backup_connections = {} # len 1 if a backup, len 2 if leader (at start)
@@ -102,7 +107,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
             self.edit_event(request, None)
 
-        elif purpose == EVENT_SCHEDULED:
+        elif purpose == PUBLIC_EVENT_SCHEDULED:
             host = parsed_line[1]
             starttime = int(parsed_line[2])
             duration = int(parsed_line[3])
@@ -114,7 +119,23 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             request.starttime = starttime
             request.duration = duration
 
-            self.schedule_event(request, None)
+            self.schedule_public_event(request, None)
+        
+        elif purpose == PRIVATE_EVENT_SCHEDULED:
+            host = parsed_line[1]
+            starttime = int(parsed_line[2])
+            duration = int(parsed_line[3])
+            description = parsed_line[4]
+            guestlist = parsed_line[5]
+
+            request = proto.Event()
+            request.host = host
+            request.description = description
+            request.starttime = starttime
+            request.duration = duration
+            request.guestlist = guestlist
+
+            self.schedule_private_event(request, None)
 
         elif purpose == EVENT_DELETED:
             event_id = int(parsed_line[1])
@@ -243,6 +264,9 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         if SEPARATOR in username:
             return proto.Text(text="Username cannot contain the character: {SEPARATOR}")
         
+        if ", " in username:
+            return proto.Text(text="Username cannot contain the character: ', '")
+        
         if username in self.accounts:
             return proto.Text(text="Username already exists.")
         else:
@@ -259,6 +283,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             mutex_new_event_notifications.acquire()
             self.new_event_notifications[username] = []
             mutex_new_event_notifications.release()
+
+            mutex_events.acquire()
+            self.private_mappings[username] = []
+            mutex_events.release()
 
             # If leader, sync replicas
             if self.is_leader:
@@ -308,10 +336,25 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             del self.new_event_notifications[username]
             mutex_new_event_notifications.release()
 
+            mutex_events.acquire()
+            # Delete all private events user is a part of
+            del self.private_mappings[username]
+
             # Delete all public events created by this user
             for event in self.public_events:
                 if event.host == username:
                     self.delete_event(event)
+            
+            # Delete all private events created by this user
+            for event in self.private_events:
+                if event.host == username:
+                    self.delete_event(event)
+                
+                if username in event.guestlist.split(", "):
+                    new_guestlist = event.guestlist.split(", ").remove(username)
+                    event.guestlist = ", ".join(new_guestlist)
+
+            mutex_events.release()
 
             mutex_accounts.acquire()
             self.accounts.remove(username)
@@ -394,8 +437,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         formatted_message.starttime = event.starttime
         formatted_message.duration = event.duration
         formatted_message.description = event.description
+        formatted_message.guestlist = event.guestlist
         return formatted_message
     
+
     '''Notifies a new event for the user.'''
     def notify_new_event(self, request, context):
         username = request.text
@@ -407,25 +452,40 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         mutex_new_event_notifications.release()
         return proto.Text(text=UPDATE_SUCCESSFUL)
     
+    # True if conflict; False if no conflict
+    def check_conflict(self, event1, event2, private=False):
+        event1_starttime = datetime.datetime.fromtimestamp(event1.starttime)
+        event1_endtime = event1_starttime + datetime.timedelta(hours=event1.duration)
+        event2_starttime = datetime.datetime.fromtimestamp(event2.starttime)
+        event2_endtime = event2_starttime + datetime.timedelta(hours=event2.duration)
 
-    '''Schedules a new event for the user.'''
-    def schedule_event(self, request, context):
-        print("Scheduling event")
+        return not (event1_endtime <= event2_starttime or event2_endtime <= event1_starttime)
+    
+
+    '''Schedules a new public event for the user.'''
+    def schedule_public_event(self, request, context):
+        print("Scheduling public event")
         host = request.host
         starttime = request.starttime
         duration = request.duration
         description = request.description
-        new_event = Event(id=self.next_event_id, host=host, starttime=starttime, duration=duration, description=description)
-        new_starttime = datetime.datetime.utcfromtimestamp(new_event.starttime)
-        new_event_endtime = new_starttime + datetime.timedelta(hours=new_event.duration)
+        new_event = Event(id=self.next_event_id, host=host, starttime=starttime, duration=duration, description=description, guestlist="All")
         mutex_events.acquire()
+        
+        # Check conflict with public events
         for event in self.public_events:
-            event_starttime = datetime.datetime.utcfromtimestamp(event.starttime)
-            event_endtime = event_starttime + datetime.timedelta(hours=event.duration)
-            if not (new_event_endtime <= event_starttime or event_endtime <= new_starttime):
+            if self.check_conflict(new_event, event):
                 # TODO: CHECK THIS LATER
                 mutex_events.release()
                 return proto.Text(text=EVENT_CONFLICT)
+        
+        # Check conflict with private events
+        for event in self.private_events:
+            if self.check_conflict(new_event, event):
+                # TODO: CHECK THIS LATER
+                mutex_events.release()
+                return proto.Text(text=EVENT_CONFLICT)
+
         self.public_events.append(new_event)
         self.next_event_id += 1
         mutex_events.release()
@@ -448,7 +508,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 except Exception as e:
                     print("Backup is down")
 
-        text = EVENT_SCHEDULED + SEPARATOR + host + SEPARATOR + str(starttime) + SEPARATOR + str(duration) + SEPARATOR + description
+        text = PUBLIC_EVENT_SCHEDULED + SEPARATOR + host + SEPARATOR + str(starttime) + SEPARATOR + str(duration) + SEPARATOR + description
         try:
             logger = logging.getLogger(f'{self.id}')
             logger.info(text)
@@ -459,23 +519,93 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             print(e)
             print("Error logging update")
 
-        return proto.Text(text=EVENT_SCHEDULED)
+        return proto.Text(text=PUBLIC_EVENT_SCHEDULED)
 
+
+    '''Schedules a new private event for the user.'''
+    def schedule_private_event(self, request, context):
+        print("Scheduling private event")
+        host = request.host
+        starttime = request.starttime
+        duration = request.duration
+        description = request.description
+        guestlist = request.guestlist
+        new_event = Event(id=self.next_event_id, host=host, starttime=starttime, duration=duration, description=description, guestlist=guestlist)
+        mutex_events.acquire()
+        
+        try:
+            # Check conflict with public events
+            for event in self.public_events:
+                if self.check_conflict(new_event, event):
+                    mutex_events.release()
+                    return proto.Text(text=EVENT_CONFLICT)
+            
+            # Check conflict with private events
+            for guest in guestlist.split(", "):
+                event_ids = self.private_mappings[guest]
+                for event in self.private_events:
+                    if event.id in event_ids and self.check_conflict(new_event, event):
+                        mutex_events.release()
+                        return proto.Text(text=EVENT_CONFLICT)
+
+            self.private_events.append(new_event)
+            for guest in guestlist.split(", "):
+                self.private_mappings[guest].append(new_event.id)
+            
+            self.next_event_id += 1
+            mutex_events.release()
+
+            # Update notifications for all invited accounts
+            for user in guestlist.split(", "):
+                if user != host:
+                    mutex_new_event_notifications.acquire()
+                    self.new_event_notifications[user].append(new_event)
+                    mutex_new_event_notifications.release()
+            
+        except Exception as e:
+            print(e)
+
+        # If leader, sync replicas
+        if self.is_leader:    
+            print("back up connections: ", self.backup_connections)
+            for replica in self.backup_connections:
+                response = None
+                # Block until backups have been successfully updated
+                try:
+                    replica.schedule_event(request)
+                except Exception as e:
+                    print("Backup is down")
+
+        text = PRIVATE_EVENT_SCHEDULED + SEPARATOR + host + SEPARATOR + str(starttime) + SEPARATOR + str(duration) + SEPARATOR + description + SEPARATOR + guestlist
+        try:
+            logger = logging.getLogger(f'{self.id}')
+            logger.info(text)
+            for other in self.other_servers:
+                print(f"{self.id}")
+                other.log_update(proto.Search(function=f'{self.id}', value=text))
+        except Exception as e:
+            print(e)
+            print("Error logging update")
+
+        return proto.Text(text=PRIVATE_EVENT_SCHEDULED)
+    
 
     '''Searches for events for the user.'''
     def search_events(self, request, context):
         function = request.function
         value = request.value
 
+        all_events = self.public_events + self.private_events
+
         if function==SEARCH_ALL_EVENTS:
-            # TODO: order self.public_events
-            if len(self.public_events) == 0:
+            # TODO: order events
+            if len(all_events) == 0:
                 return proto.Event(returntext=NO_MATCH)
-            for event in self.public_events:
+            for event in all_events:
                 yield self.convert_event_to_proto(event)
         elif function==SEARCH_USER:
             none_found = True
-            for event in self.public_events:
+            for event in all_events:
                 x = re.search(value, event.host)
                 if x is not None:
                     none_found=False
@@ -486,7 +616,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             print("NOT IMPLEMENTED")
         elif function==SEARCH_DESCRIPTION:
             none_found = True
-            for event in self.public_events:
+            for event in all_events:
                 x = re.search(value, event.description)
                 if x is not None:
                     none_found=False
@@ -497,8 +627,29 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Edits an event for the user.'''
     def edit_event(self, request, context):
-        # TODO: check for conflicts later
         event_id = request.id
+        new_event = Event(id=event_id, host=request.host, starttime=request.starttime, duration=request.duration, description=request.description)
+        
+        # Check conflicts against all public events
+        for event in self.public_events:
+            if self.check_conflict(new_event, event):
+                return proto.Text(text=EVENT_CONFLICT)
+        
+        # Check conflicts against all private events
+        guestlist = None
+        for event in self.private_events:
+            if event.id == event_id:
+                guestlist = event.guestlist
+                break
+        
+        if guestlist is not None:
+            for guest in guestlist:
+                if guest in self.private_mappings:
+                    event_ids = self.private_mappings[guest]
+                    for event in self.private_events:
+                        if event.id in event_ids and self.check_conflict(new_event, event):
+                            return proto.Text(text=EVENT_CONFLICT)
+        
         for event in self.public_events:
             if event.id == event_id:
                 mutex_events.acquire()
@@ -531,9 +682,40 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 # Update other servers and then log
                 return proto.Text(text=UPDATE_SUCCESSFUL)
-            
-        # TODO: have the update occur 
         
+        for event in self.private_events:
+            if event.id == event_id:
+                mutex_events.acquire()
+                event.starttime = request.starttime
+                event.duration = request.duration
+                event.description = request.description
+                mutex_events.release()
+
+                # If leader, sync replicas
+                if self.is_leader:    
+                    print("back up connections: ", self.backup_connections)
+                    for replica in self.backup_connections:
+                        response = None
+                        # Block until backups have been successfully updated
+                        try:
+                            response = replica.edit_event(request)
+                        except Exception as e:
+                            print("Backup is down")
+
+                text = EVENT_EDITED + SEPARATOR + str(event_id) + SEPARATOR + str(request.starttime) + SEPARATOR + str(request.duration) + SEPARATOR + request.description
+                try:
+                    logger = logging.getLogger(f'{self.id}')
+                    logger.info(text)
+                    for other in self.other_servers:
+                        print(f"{self.id}")
+                        other.log_update(proto.Search(function=f'{self.id}', value=text))
+                except Exception as e:
+                    print(e)
+                    print("Error logging update")
+
+                # Update other servers and then log
+                return proto.Text(text=UPDATE_SUCCESSFUL)
+            
         return proto.Text(text=ACTION_UNSUCCESSFUL)
     
 
@@ -554,6 +736,39 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         # Block until backups have been successfully updated
                         try:
                             response = replica.delete_event(request)
+                        except Exception as e:
+                            print("Backup is down")
+
+                text = DELETE_EVENT + SEPARATOR + str(event_id)
+                try:
+                    logger = logging.getLogger(f'{self.id}')
+                    logger.info(text)
+                    for other in self.other_servers:
+                        print(f"{self.id}")
+                        other.log_update(proto.Search(function=f'{self.id}', value=text))
+                except Exception as e:
+                    print(e)
+                    print("Error logging update")
+
+                return proto.Text(text=EVENT_DELETED)
+    
+        for event in self.private_events:
+            if event.id == event_id:
+                mutex_events.acquire()
+                self.private_events.remove(event)
+
+                for username in event.guestlist.split(","):
+                    self.private_mappings[username].remove(event_id)
+                
+                mutex_events.release()
+
+                # If leader, sync replicas
+                if self.is_leader:    
+                    print("back up connections: ", self.backup_connections)
+                    for replica in self.backup_connections:
+                        # Block until backups have been successfully updated
+                        try:
+                            replica.delete_event(request)
                         except Exception as e:
                             print("Backup is down")
 

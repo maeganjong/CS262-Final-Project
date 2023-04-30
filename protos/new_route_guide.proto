@@ -18,7 +18,8 @@ service Calendar {
     rpc logout(Text) returns (Text) {}
 
     rpc notify_new_event(Text) returns (stream Event) {}
-    rpc schedule_event(Event) returns (Text) {}
+    rpc schedule_public_event(Event) returns (Text) {}
+    rpc schedule_private_event(Event) returns (Text) {}
     rpc edit_event(Event) returns (Text) {}
     rpc delete_event(Event) returns (Text) {}
 
@@ -47,7 +48,8 @@ message Event {
     string description = 3;
     int64 starttime = 4;
     int64 duration = 5;
-    string returntext = 6;
+    string guestlist = 6;
+    string returntext = 7;
 }
 
 message Empty {}
