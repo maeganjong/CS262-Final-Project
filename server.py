@@ -31,7 +31,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         # three event-related databases that follow will be guarded by mutex_events (only one edit to all events at a time)
         self.public_events = [] # [event1, event2, event3]
         self.private_events = [] # [event1, event2, event3]
-        # maps username to list of private events they are a part of
+        # maps username to list of private events they are a part of or they are hosting
         self.private_mappings = {} # {username: [event_id1, event_id2, event_id3]}
 
         self.is_leader = False
@@ -540,7 +540,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     mutex_events.release()
                     return proto.Text(text=EVENT_CONFLICT)
             
-            # Check conflict with private events
+            # Check conflict with private events for each person on guestlist
             for guest in guestlist.split(", "):
                 event_ids = self.private_mappings[guest]
                 for event in self.private_events:
@@ -551,6 +551,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.private_events.append(new_event)
             for guest in guestlist.split(", "):
                 self.private_mappings[guest].append(new_event.id)
+            self.private_mappings[host].append(new_event.id)
             
             self.next_event_id += 1
             mutex_events.release()
@@ -759,7 +760,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 for username in event.guestlist.split(","):
                     self.private_mappings[username].remove(event_id)
-                
+                self.private_mappings[event.host].remove(event_id)
+
                 mutex_events.release()
 
                 # If leader, sync replicas
