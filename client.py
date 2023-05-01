@@ -12,10 +12,10 @@ class CalendarClient:
         if test:
             return 
         
-        """
+        '''
         List of ports of replicas in order of priority (for power transfer)
         List will decrease in size as servers go down; first port in list is the leader
-        """
+        '''
         self.replica_addresses = [(SERVER1, PORT1), (SERVER2, PORT2), (SERVER3, PORT3)]
         self.connection = None
 
@@ -56,8 +56,6 @@ class CalendarClient:
                 # If for some reason, it gets here (failure), remove current leader from list of ports
                 self.replica_addresses.pop(0)
             except Exception as e:
-                # TODO REMOVE PRINT LATER
-                print("I AM HERE")
                 # Remove current leader from list of ports
                 self.replica_addresses.pop(0)
         
@@ -75,9 +73,8 @@ class CalendarClient:
             # Power transfer to a backup replica
             self.find_next_leader()
 
-    """Displays menu for user to select what to do next."""
+    '''Displays menu for user to select what to do next.'''
     def display_menu(self):
-        # TODO: MAYBE CHANGE THIS UI IDK?
         print()
         print("Press 0 to schedule a new public event.")
         print("Press 1 to schedule a new private event.")
@@ -153,7 +150,6 @@ class CalendarClient:
             try: 
                 if purpose == "0":
                     response = self.connection.register_user(new_text)
-                    # TODO: DISPLAY ALL EVENTS
                 elif purpose == "1":
                     response = self.connection.login_user(new_text)
                 
@@ -190,6 +186,7 @@ class CalendarClient:
                 self.find_next_leader()
 
 
+    '''Logs out user.'''
     def logout(self):
         done = False
         while not done:
@@ -206,6 +203,7 @@ class CalendarClient:
                 self.find_next_leader()
     
 
+    '''Deletes user account.'''
     def delete_account(self):
         done = False
         while not done:
@@ -222,6 +220,7 @@ class CalendarClient:
                 self.find_next_leader()
     
 
+    '''Prints out event in aesthetic manner.'''
     def print_event(self, event):
         print("--------------------------------------------------")
         print(f"[{event.id}] Event By {event.host}")
@@ -248,6 +247,8 @@ class CalendarClient:
                 # Power transfer to a backup replica
                 self.find_next_leader()
 
+
+    '''Helper function to ask for date.'''
     def prompt_date(self):
         os.system(f'cal')
         leapyear = False
@@ -277,7 +278,7 @@ class CalendarClient:
             except:
                 print("Month not inputted correctly.")
       
-        os.system(f'cal {month} {year}') # TODO: SOME ERROR CATCHING?
+        os.system(f'cal {month} {year}')
 
         done = False
         while not done:
@@ -329,7 +330,6 @@ class CalendarClient:
 
         description = input("How would you like to describe your event?\n")
 
-        # TODO FINISH THIS STUFF
         dt = datetime.datetime(int(year), int(month), int(day), int(hour))
         utc_timestamp = dt.timestamp()
 
@@ -340,6 +340,7 @@ class CalendarClient:
         else:
             self.schedule_private_event(new_event)
 
+    '''Schedules a public event for the user.'''
     def schedule_public_event(self, new_event):
         done = False
         while not done:
@@ -352,6 +353,8 @@ class CalendarClient:
                 # Power transfer to a backup replica
                 self.find_next_leader()
     
+
+    '''Schedules a private event for the user.'''
     def schedule_private_event(self, new_event):
         guestlist = input("Who would you like to invite to your event? Please enter a list of usernames separated by commas.\n")
         guestlist = guestlist.split(",")
@@ -448,7 +451,6 @@ class CalendarClient:
                     return
                 self.print_event(event)
         except Exception as e:
-            # TODO: i don't know why we need this but it makes this work??
             print("why are we here?")
 
 
@@ -492,7 +494,6 @@ class CalendarClient:
             print("You do not have permission to edit this event or this event does not exist.")
             return
         
-        # TODO: check valid event id/permissions and display current event details
         done = False
         while not done:
             try:
@@ -589,60 +590,3 @@ class CalendarClient:
                 print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
-
-
-
-""" DELETE THIS LATER USE FOR REFERENCE!
-    '''Prompts user to specify recipient of their message and the message body. Creates the Note object encompassing the message then sends the message to the server.'''
-    def send_chat_message(self):
-        recipient = input("Who do you want to send a message to?\n")
-        new_text = proto.Text()
-        new_text.text = recipient
-        done = False
-        while not done:
-            try:
-                response = self.connection.check_user_exists(new_text)
-                if response.text == USER_DOES_NOT_EXIST:
-                    print(response.text)
-                    return False
-                done = True
-            except Exception as e:
-                # Power transfer to a backup replica
-                self.find_next_leader()
-        
-        message = input("What's your message?\n")
-        new_message = proto.Note()
-        new_message.sender = self.username
-        new_message.recipient = recipient
-        new_message.message = message
-
-        done = False
-        while not done:
-            try:
-                output = self.connection.client_send_message(new_message)
-                print(output.text)
-                done = True
-            except Exception as e:
-                # Power transfer to a backup replica
-                self.find_next_leader()
-        
-        return True
-
-    '''Handles the print of all the messages sent to the user.'''
-    def print_messages(self):
-        for message in self.receive_messages():
-            print(message)
-
-    '''User pulls message sent to them from the server.'''
-    def receive_messages(self):
-        done = False
-        while not done:
-            try:
-                notes = self.connection.client_receive_message(proto.Text(text=self.username))
-                for note in notes:
-                    yield f"[{note.sender} sent to {note.recipient}] {note.message}"
-                done = True
-            except Exception as e:
-                # Power transfer to a backup replica
-                self.find_next_leader()
-"""

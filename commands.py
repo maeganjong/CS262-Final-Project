@@ -4,6 +4,7 @@ PORT1 = 8050
 PORT2 = 8051
 PORT3 = 8052
 FORMAT = 'utf-8'
+
 ## Edit Server below to the hostname of the machine running the server
 SERVER1 = "dhcp-10-250-100-11.harvard.edu" 
 SERVER2 = "dhcp-10-250-15-170.harvard.edu" 
@@ -43,7 +44,6 @@ NO_MORE_DATA = "!NOMOREDATA"
 NOTIFY = "!NOTIFY"
 
 # Printable messages from NOTIFY
-# TODO: CHANGE THIS I FORGOT WHAT THIS WAS
 LOGIN_SUCCESSFUL = "Login successful!"
 REGISTRATION_SUCCESSFUL = "Registration successful!"
 USER_DOES_NOT_EXIST = "User does not exist."

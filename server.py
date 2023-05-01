@@ -67,7 +67,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         
     '''Processes log files for starting the persistence server'''
-    # TODO: CHANGE THIS!!
     def process_line(self, line):
         header = "INFO:root:"
         line = line[:-1] # remove newline char at end of string
@@ -76,6 +75,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         parsed_line = line.split(SEPARATOR)
         
         purpose = parsed_line[0]
+
         # Handles all actions and replicates in the new server
         if purpose == LOGIN_SUCCESSFUL:
             username = parsed_line[1]
@@ -192,14 +192,14 @@ class CalendarServicer(proto_grpc.CalendarServicer):
     def alive_ping(self, request, context):
         return proto.Text(text=LEADER_ALIVE)
 
-    """Notify the server that they are the new leader."""
+    '''Notify the server that they are the new leader.'''
     def notify_leader(self, request, context):
         self.sync_backups()
         print("Backup syncing is done")
         self.is_leader = True
         return proto.Text(text=LEADER_CONFIRMATION)
 
-    """Syncs the backups with the new leader's state."""
+    '''Syncs the backups with the new leader's state.'''
     def sync_backups(self):
         # Operates on the assumption that the new leader is the first (of all the backups) to sync with ex-leader
         # Send all accounts to backups
@@ -429,7 +429,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         return proto.Text(text=LOGOUT_SUCCESSFUL)
     
-
+    '''Helper function to convert the data into a gRPC message'''
     def convert_event_to_proto(self, event):
         formatted_message = proto.Event()
         formatted_message.id = event.id
@@ -452,7 +452,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         mutex_new_event_notifications.release()
         return proto.Text(text=UPDATE_SUCCESSFUL)
     
-    # True if conflict; False if no conflict
+    '''Helper function to return True if there's a conflict, False if not'''
     def check_conflict(self, event1, event2, private=False):
         event1_starttime = datetime.datetime.fromtimestamp(event1.starttime)
         event1_endtime = event1_starttime + datetime.timedelta(hours=event1.duration)
@@ -464,7 +464,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Schedules a new public event for the user.'''
     def schedule_public_event(self, request, context):
-        print("Scheduling public event")
         host = request.host
         starttime = request.starttime
         duration = request.duration
@@ -475,14 +474,12 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         # Check conflict with public events
         for event in self.public_events:
             if self.check_conflict(new_event, event):
-                # TODO: CHECK THIS LATER
                 mutex_events.release()
                 return proto.Text(text=EVENT_CONFLICT)
         
         # Check conflict with private events
         for event in self.private_events:
             if self.check_conflict(new_event, event):
-                # TODO: CHECK THIS LATER
                 mutex_events.release()
                 return proto.Text(text=EVENT_CONFLICT)
 
@@ -524,7 +521,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
     '''Schedules a new private event for the user.'''
     def schedule_private_event(self, request, context):
-        print("Scheduling private event")
         host = request.host
         starttime = request.starttime
         duration = request.duration
@@ -598,12 +594,13 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         all_events = self.public_events + self.private_events
 
+        # Displays all events
         if function==SEARCH_ALL_EVENTS:
-            # TODO: order events
             if len(all_events) == 0:
                 return proto.Event(returntext=NO_MATCH)
             for event in all_events:
                 yield self.convert_event_to_proto(event)
+        # Displays events for a particular user
         elif function==SEARCH_USER:
             none_found = True
             for event in all_events:
@@ -613,8 +610,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     yield self.convert_event_to_proto(event)
             if none_found:
                 yield proto.Event(returntext=NO_MATCH)
-        elif function==SEARCH_TIME:
-            print("NOT IMPLEMENTED")
+        # Displays events for a particular description
         elif function==SEARCH_DESCRIPTION:
             none_found = True
             for event in all_events:
@@ -790,9 +786,9 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         return proto.Text(text=ACTION_UNSUCCESSFUL)
     
 
-"""Class for running server backend functionality."""
+'''Class for running server backend functionality.'''
 class ServerRunner:
-    """Initialize a server instance."""
+    '''Initialize a server instance.'''
     def __init__(self, id = 0, address = (None, None)):
         self.id = id
         self.ip, self.port = address
@@ -800,21 +796,21 @@ class ServerRunner:
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self.calendar_servicer = CalendarServicer(id=self.id, address=address)
     
-    """Function for starting server."""
+    '''Function for starting server.'''
     def start(self):
         proto_grpc.add_CalendarServicer_to_server(self.calendar_servicer, self.server)
         self.server.add_insecure_port(f"[::]:{self.port}")
         self.server.start()
 
-    """Function for waiting for server termination."""
+    '''Function for waiting for server termination.'''
     def wait_for_termination(self):
         self.server.wait_for_termination()
     
-    """Function for connecting to replicas."""
+    '''Function for connecting to replicas.'''
     def connect_to_replicas(self, logfile=None):
         self.calendar_servicer.connect_to_replicas(logfile=logfile)
 
-    """Function for stopping server."""
+    '''Function for stopping server.'''
     def stop(self):
         self.server.stop(grace=None)
         self.thread_pool.shutdown(wait=False)
