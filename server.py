@@ -20,7 +20,7 @@ mutex_events = threading.Lock()
 
 class CalendarServicer(proto_grpc.CalendarServicer):
     '''Initializes CalendarServicer that sets up the datastructures to store user accounts and messages.'''
-    def __init__(self, id=0, address=None, logfile = None):
+    def __init__(self, id=0, address=None):
         self.ip, self.port = address
         self.id = id
 
@@ -43,9 +43,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         for replica_id, address in REPLICA_IDS:
             self.setup_logger(f'{replica_id}', f'{replica_id}.log')
         
-        if logfile:
-            # Persistence: all servers went down and set up this server from the log file
-            self.set_state_from_file(logfile)
 
     '''Initializes the logging meta settings'''
     def setup_logger(self, logger_name, log_file, level=logging.INFO):
@@ -160,7 +157,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         f.close()
 
     '''Connects each replica based on the hierarchy of backups'''
-    def connect_to_replicas(self):
+    def connect_to_replicas(self, logfile=None):
         if self.id == 1:
             self.is_leader = True
             print("I am the leader")
@@ -187,6 +184,9 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.other_servers[connection2] = 2
         
         print("Replica communication channels established.")
+        if logfile:
+            # Persistence: all servers went down and set up this server from the log file
+            self.set_state_from_file(logfile)
 
     '''Determines whether server being pinged is alive and can respond.'''
     def alive_ping(self, request, context):
@@ -793,12 +793,12 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 """Class for running server backend functionality."""
 class ServerRunner:
     """Initialize a server instance."""
-    def __init__(self, id = 0, address = (None, None), logfile=None):
+    def __init__(self, id = 0, address = (None, None)):
         self.id = id
         self.ip, self.port = address
 
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        self.calendar_servicer = CalendarServicer(id=self.id, address=address, logfile=logfile)
+        self.calendar_servicer = CalendarServicer(id=self.id, address=address)
     
     """Function for starting server."""
     def start(self):
@@ -811,8 +811,8 @@ class ServerRunner:
         self.server.wait_for_termination()
     
     """Function for connecting to replicas."""
-    def connect_to_replicas(self):
-        self.calendar_servicer.connect_to_replicas()
+    def connect_to_replicas(self, logfile=None):
+        self.calendar_servicer.connect_to_replicas(logfile=logfile)
 
     """Function for stopping server."""
     def stop(self):
