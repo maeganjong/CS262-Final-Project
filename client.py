@@ -361,12 +361,12 @@ class CalendarClient:
             done = False
             while not done:
                 try:
-                    valid = self.connection.check_user_exists(proto.Text(text=guest))
+                    response = self.connection.check_user_exists(proto.Text(text=guest))
                     done = True
                 except Exception as e:
                     # Power transfer to a backup replica
                     self.find_next_leader()
-            if not valid:
+            if response.text == USER_DOES_NOT_EXIST:
                 print(f"{guest} is not a valid user.")
             else:
                 clean_guestlist.append(guest)

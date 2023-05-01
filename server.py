@@ -504,7 +504,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 response = None
                 # Block until backups have been successfully updated
                 try:
-                    response = replica.schedule_event(request)
+                    response = replica.schedule_public_event(request)
                 except Exception as e:
                     print("Backup is down")
 
@@ -572,7 +572,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 response = None
                 # Block until backups have been successfully updated
                 try:
-                    replica.schedule_event(request)
+                    replica.schedule_private_event(request)
                 except Exception as e:
                     print("Backup is down")
 
@@ -632,7 +632,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         
         # Check conflicts against all public events
         for event in self.public_events:
-            if self.check_conflict(new_event, event):
+            if self.check_conflict(new_event, event) and event.id != event_id:
                 return proto.Text(text=EVENT_CONFLICT)
         
         # Check conflicts against all private events
