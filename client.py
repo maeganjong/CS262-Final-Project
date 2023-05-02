@@ -40,7 +40,6 @@ class CalendarClient:
     '''Finds the next leader when the existing leader was down'''
     def find_next_leader(self):
         while len(self.replica_addresses) > 0:
-            print(self.replica_addresses)
             current_leader_server, current_leader_port = self.replica_addresses[0]
             try:
                 self.connection = new_route_guide_pb2_grpc.CalendarStub(grpc.insecure_channel(f"{current_leader_server}:{current_leader_port}"))
@@ -48,9 +47,7 @@ class CalendarClient:
                 if response.text == LEADER_ALIVE:
                     # Send message notifying new server that they're the leader
                     confirmation = self.connection.notify_leader(proto.Text(text=LEADER_NOTIFICATION))
-                    print(confirmation)
                     if confirmation.text == LEADER_CONFIRMATION:
-                        print("SWITCHING REPLICAS")
                         return
                 
                 # If for some reason, it gets here (failure), remove current leader from list of ports
@@ -162,7 +159,6 @@ class CalendarClient:
                     return username, True
 
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
 
@@ -243,7 +239,6 @@ class CalendarClient:
                     self.print_event(notification)
                 done = True
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
 
@@ -349,7 +344,6 @@ class CalendarClient:
                 print(response.text)
                 done = True
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
     
@@ -407,8 +401,6 @@ class CalendarClient:
                     events = self.connection.search_events(proto.Search(function=SEARCH_ALL_EVENTS,value=""))
                     done = True
                 except Exception as e:
-                    print(e)
-                    print("JELFJKSFJLK?")
                     # Power transfer to a backup replica
                     self.find_next_leader()
             
@@ -419,7 +411,6 @@ class CalendarClient:
                         events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=user))
                         done = True
                     except Exception as e:
-                        print(e)
                         # Power transfer to a backup replica
                         self.find_next_leader()
             
@@ -430,7 +421,6 @@ class CalendarClient:
                         events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=value))
                         done = True
                     except Exception as e:
-                        print(e)
                         # Power transfer to a backup replica
                         self.find_next_leader()
             
@@ -441,7 +431,6 @@ class CalendarClient:
                         events = self.connection.search_events(proto.Search(function=SEARCH_DESCRIPTION,value=value))
                         done = True
                     except Exception as e:
-                        print(e)
                         # Power transfer to a backup replica
                         self.find_next_leader()
         try:
@@ -480,7 +469,6 @@ class CalendarClient:
                 user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
                 done = True
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
         
@@ -538,7 +526,6 @@ class CalendarClient:
                 print(response.text)
                 done = True
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
     
@@ -566,7 +553,6 @@ class CalendarClient:
                 user_events = self.connection.search_events(proto.Search(function=SEARCH_USER,value=self.username))
                 done = True
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()
         
@@ -587,6 +573,5 @@ class CalendarClient:
                 print(response.text)
                 done = True
             except Exception as e:
-                print(e)
                 # Power transfer to a backup replica
                 self.find_next_leader()

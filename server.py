@@ -292,7 +292,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             if self.is_leader:
                 new_text = proto.Text()
                 new_text.text = username
-                print("back up connections: ", self.backup_connections)
+                print("Backup Connections: ", self.backup_connections)
                 for replica in self.backup_connections:
                     response = None
                     # Block until backups have been successfully updated
@@ -310,7 +310,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     print(f"{self.id}")
                     other.log_update(proto.Search(function=f'{self.id}', value=text))
             except Exception as e:
-                print(e)
                 print("Error logging update")
 
             return proto.Text(text=LOGIN_SUCCESSFUL)
@@ -496,7 +495,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
         # If leader, sync replicas
         if self.is_leader:    
-            print("back up connections: ", self.backup_connections)
+            print("Backup Connections: ", self.backup_connections)
             for replica in self.backup_connections:
                 response = None
                 # Block until backups have been successfully updated
@@ -513,7 +512,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 print(f"{self.id}")
                 other.log_update(proto.Search(function=f'{self.id}', value=text))
         except Exception as e:
-            print(e)
             print("Error logging update")
 
         return proto.Text(text=PUBLIC_EVENT_SCHEDULED)
@@ -560,11 +558,11 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     mutex_new_event_notifications.release()
             
         except Exception as e:
-            print(e)
+            print("Error scheduling private event")
 
         # If leader, sync replicas
         if self.is_leader:    
-            print("back up connections: ", self.backup_connections)
+            print("Backup Connections: ", self.backup_connections)
             for replica in self.backup_connections:
                 response = None
                 # Block until backups have been successfully updated
@@ -581,7 +579,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                 print(f"{self.id}")
                 other.log_update(proto.Search(function=f'{self.id}', value=text))
         except Exception as e:
-            print(e)
             print("Error logging update")
 
         return proto.Text(text=PRIVATE_EVENT_SCHEDULED)
@@ -657,7 +654,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 # If leader, sync replicas
                 if self.is_leader:    
-                    print("back up connections: ", self.backup_connections)
+                    print("Backup Connections: ", self.backup_connections)
                     for replica in self.backup_connections:
                         response = None
                         # Block until backups have been successfully updated
@@ -674,7 +671,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         print(f"{self.id}")
                         other.log_update(proto.Search(function=f'{self.id}', value=text))
                 except Exception as e:
-                    print(e)
                     print("Error logging update")
 
                 # Update other servers and then log
@@ -690,7 +686,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 # If leader, sync replicas
                 if self.is_leader:    
-                    print("back up connections: ", self.backup_connections)
+                    print("Backup Connections: ", self.backup_connections)
                     for replica in self.backup_connections:
                         response = None
                         # Block until backups have been successfully updated
@@ -707,7 +703,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         print(f"{self.id}")
                         other.log_update(proto.Search(function=f'{self.id}', value=text))
                 except Exception as e:
-                    print(e)
                     print("Error logging update")
 
                 # Update other servers and then log
@@ -727,7 +722,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 # If leader, sync replicas
                 if self.is_leader:    
-                    print("back up connections: ", self.backup_connections)
+                    print("Backup Connections: ", self.backup_connections)
                     for replica in self.backup_connections:
                         response = None
                         # Block until backups have been successfully updated
@@ -744,7 +739,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         print(f"{self.id}")
                         other.log_update(proto.Search(function=f'{self.id}', value=text))
                 except Exception as e:
-                    print(e)
                     print("Error logging update")
 
                 return proto.Text(text=EVENT_DELETED)
@@ -762,7 +756,7 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 # If leader, sync replicas
                 if self.is_leader:    
-                    print("back up connections: ", self.backup_connections)
+                    print("Backup Connections: ", self.backup_connections)
                     for replica in self.backup_connections:
                         # Block until backups have been successfully updated
                         try:
@@ -778,7 +772,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                         print(f"{self.id}")
                         other.log_update(proto.Search(function=f'{self.id}', value=text))
                 except Exception as e:
-                    print(e)
                     print("Error logging update")
 
                 return proto.Text(text=EVENT_DELETED)
