@@ -340,25 +340,35 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             del self.private_mappings[username]
 
             # Delete all public events created by this user
+            new_public_events = []
             for event in self.public_events:
-                if event.host == username:
-                    self.delete_event(event)
+                if event.host != username:
+                    new_public_events.append(event)
+            self.public_events = new_public_events
             
             # Delete all private events created by this user
+            new_private_events = []
             for event in self.private_events:
                 if event.host == username:
-                    self.delete_event(event)
+                    continue
                 
-                if username in event.guestlist.split(", "):
-                    new_guestlist = event.guestlist.split(", ").remove(username)
-                    event.guestlist = ", ".join(new_guestlist)
+                # Remove user from guestlists of private events
+                guests = event.guestlist.split(", ")
+                if username in guests:
+                    guests.remove(username)
+                    # If no more guests, remove event
+                    if len(guests) != 0:
+                        new_private_events.append(event)
+                    
+                    event.guestlist = ", ".join(guests)
+            self.private_events = new_private_events
 
             mutex_events.release()
 
             mutex_accounts.acquire()
             self.accounts.remove(username)
             mutex_accounts.release()
-        except:
+        except Exception as e:
             return proto.Text(text=ACTION_UNSUCCESSFUL)
 
         # If leader, sync replicas
