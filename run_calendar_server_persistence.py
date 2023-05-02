@@ -1,7 +1,7 @@
 from server import *
 
 # Chat server for persistence. Run after all other chat servers are down.
-logname = "other.log"
+logname = "test_persistence.log"
 replica_id, address = REPLICA_IDS[0]
 calendar_server = ServerRunner(id=replica_id, address=address)
 print("[STARTING] lead server is starting...")
