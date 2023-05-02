@@ -90,7 +90,7 @@ class CalendarClient:
         action = input("What would you like to do?\n")
         if action == "0":
             self.schedule_event()
-        if action == "1":
+        elif action == "1":
             self.schedule_event(public=False)
         elif action == "2":
             self.display_events()
@@ -451,7 +451,7 @@ class CalendarClient:
                     return
                 self.print_event(event)
         except Exception as e:
-            print("why are we here?")
+            return
 
 
     '''Edits an event for the user.'''

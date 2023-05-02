@@ -20,7 +20,7 @@ mutex_events = threading.Lock()
 
 class CalendarServicer(proto_grpc.CalendarServicer):
     '''Initializes CalendarServicer that sets up the datastructures to store user accounts and messages.'''
-    def __init__(self, id=0, address=None):
+    def __init__(self, id=0, address=(None, None)):
         self.ip, self.port = address
         self.id = id
 
