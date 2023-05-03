@@ -1,6 +1,7 @@
 # CS262 Final Project: Calendar Application
 
-Engineering Ledger: https://docs.google.com/document/d/1bzkWaMzJvpgZMV6NxDX6pcs4tWTEWMRZHzOwWnqHnxE/edit?usp=sharing
+Engineering Ledger/Final Report: https://docs.google.com/document/d/1bzkWaMzJvpgZMV6NxDX6pcs4tWTEWMRZHzOwWnqHnxE/edit?usp=sharing
+Presentation Slides: https://docs.google.com/presentation/d/188GuuyO3muI8_BGDIgOTj-N4kVY2nPEw60CfmA4uHa4/edit?usp=sharing
 
 ## Running the Code
 
