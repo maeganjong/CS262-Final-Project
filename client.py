@@ -488,6 +488,7 @@ class CalendarClient:
                 edit_fields = input("Please enter all fields you'd like to edit. Separate each field with a comma. \n    [s] for start time\n    [d] for duration\n    [t] for description\n")
                 if edit_fields == "":
                     print("No fields to edit.")
+                    return
 
                 test = edit_fields.split(",")
                 for event in test:
@@ -496,6 +497,7 @@ class CalendarClient:
                 done = True
             except:
                 print("Not inputted correctly!")
+                return
 
         
         print("Current Event Details:")

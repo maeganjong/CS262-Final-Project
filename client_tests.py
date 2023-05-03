@@ -8,8 +8,8 @@ from io import StringIO
 
 # Testing account-specific functions
 
+"""Testing registration flow"""
 def test_registration_flow():
-    # Testing registration flow
     client = CalendarClient(test=True)
 
     # Setting up mocks
@@ -32,8 +32,8 @@ def test_registration_flow():
         assert client.username == "dale"
 
 
+"""Testing login flow"""
 def test_login_flow():
-    # Testing login flow
     client = CalendarClient(test=True)
 
     # Setting up mocks
@@ -56,8 +56,8 @@ def test_login_flow():
         assert client.username == "dale"
 
 
+"""Testing display accounts"""
 def test_display_accounts():
-    # Testing display accounts
     client = CalendarClient(test=True)
 
     # Setting up mocks
@@ -75,8 +75,8 @@ def test_display_accounts():
             assert terminal_output.getvalue() == "\nUsers:\ndale\ndallen\n"
 
 
-def test_delete_flow():
-    # Testing delete flow
+"""Testing delete account"""
+def test_delete_account():
     client = CalendarClient(test=True)
 
     # Setting up mocks
@@ -99,7 +99,8 @@ def test_delete_flow():
     assert not client.username
 
 
-def test_logout_flow():
+"""Testing logout"""""
+def test_logout():
     # Testing logout flow
     client = CalendarClient(test=True)
 
@@ -125,13 +126,36 @@ def test_logout_flow():
 
 # Testing event-specific functions
 
+"""Testing date prompting and error catching"""
 def test_prompt_date():
-    # TODO: FOR FINAL SUBMISSION
-    pass
+    client = CalendarClient(test=True)
+
+    # Test prompt date
+    with patch("builtins.input", side_effect=["2023", "5", "2", "1"]):
+        year, month, day, hour = client.prompt_date()
+
+        assert year == 2023
+        assert month == 5
+        assert day == 2
+        assert hour == 1
+    
+    # Test prompt date with invalid date
+    with patch("builtins.input", side_effect=["-1", "2023", "13", "5", "-1", "2", "25", "1"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            year, month, day, hour = client.prompt_date()
+
+            assert "Year not inputted correctly.\n" in terminal_output.getvalue()
+            assert year == 2023
+            assert "Month not inputted correctly.\n" in terminal_output.getvalue()
+            assert month == 5
+            assert "Date inputted incorrectly\n" in terminal_output.getvalue()
+            assert day == 2
+            assert "Hour inputted incorrectly\n" in terminal_output.getvalue()
+            assert hour == 1
 
 
+"""Test scheduling public event"""
 def test_schedule_public_event():
-    # Testing send message
     client = CalendarClient(test=True)
 
     # Setting up mocks
@@ -151,8 +175,8 @@ def test_schedule_public_event():
         assert test_event.description == "test event"
 
 
+"""Test scheduling private event"""""
 def test_schedule_private_event():
-    # Testing send message
     client = CalendarClient(test=True)
 
     # Setting up mocks
@@ -181,16 +205,153 @@ def test_schedule_private_event():
         assert test_event.guestlist == "bob, dale"
 
 
+"""Testing editing event"""""
 def test_edit_event():
-    # TODO: FOR FINAL SUBMISSION
-    pass
+    client = CalendarClient(test=True)
+
+    # Setting up mocks
+    client.username = "alyssa"
+    client.connection = MagicMock()
+    client.connection.edit_event = MagicMock(return_value=MagicMock(text="Event edited!"))
+    user_events = [MagicMock(id=1, duration=1, description="hi"), MagicMock(text=2, duration=1, description="bye")]
+    client.connection.search_events = MagicMock(return_value=user_events)
+
+    # Test editing private event successfully
+    with patch("builtins.input", side_effect=["1", "d", "2"]):
+        client.edit_event()
+
+        client.connection.edit_event.assert_called_once()
+        edited_event = client.connection.edit_event.call_args.args[0]
+        assert edited_event.id == 1
+        assert edited_event.duration == 2
+        assert edited_event.description == "hi"
 
 
+"""Testing editing/deleting event with invalid event id"""""
+def test_event_invalid_id():
+    client = CalendarClient(test=True)
+
+    # Setting up mocks
+    client.username = "alyssa"
+    client.connection = MagicMock()
+    client.connection.edit_event = MagicMock(return_value=MagicMock(text="Event edited!"))
+    client.connection.delete_event = MagicMock(return_value=MagicMock(text="Event deleted!"))
+
+    # Testing invalid id for editing event
+    with patch("builtins.input", side_effect=["x", "d", "2"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            client.edit_event()
+            client.connection.edit_event.assert_not_called()
+            assert "\nInvalid event id.\n" in terminal_output.getvalue()
+    
+    # Testing invalid id for deleting event
+    with patch("builtins.input", side_effect=["x", "d", "2"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            client.delete_event()
+            client.connection.delete_event.assert_not_called()
+            assert "\nInvalid event id.\n" in terminal_output.getvalue()
+
+
+"""Testing editing/deleting event with invalid permissions"""""
+def test_event_permissions():
+    client = CalendarClient(test=True)
+
+    # Setting up mocks
+    client.username = "alyssa"
+    client.connection = MagicMock()
+    client.connection.edit_event = MagicMock(return_value=MagicMock(text="Event edited!"))
+    client.connection.delete_event = MagicMock(return_value=MagicMock(text="Event deleted!"))
+    user_events = [MagicMock(id=1, duration=1, description="hi"), MagicMock(text=2, duration=1, description="bye")]
+    client.connection.search_events = MagicMock(return_value=user_events)
+
+    # Testing editing event invalid permissions
+    with patch("builtins.input", side_effect=["3", "d", "2"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            client.edit_event()
+            client.connection.edit_event.assert_not_called()
+            assert "\nYou do not have permission to edit this event or this event does not exist.\n" in terminal_output.getvalue()
+    
+    # Testing deleting event invalid permissions
+    with patch("builtins.input", side_effect=["3", "d", "2"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            client.delete_event()
+            client.connection.delete_event.assert_not_called()
+            assert "\nYou do not have permission to delete this event.\n" in terminal_output.getvalue()
+
+
+"""Testing editing event with invalid field formatting"""""
+def test_edit_event_invalid_format():
+    # Testing editing event
+    client = CalendarClient(test=True)
+
+    # Setting up mocks
+    client.username = "alyssa"
+    client.connection = MagicMock()
+    client.connection.edit_event = MagicMock(return_value=MagicMock(text="Event edited!"))
+    user_events = [MagicMock(id=1, duration=1, description="hi"), MagicMock(text=2, duration=1, description="bye")]
+    client.connection.search_events = MagicMock(return_value=user_events)
+
+    # Testing invalid id
+    with patch("builtins.input", side_effect=["1", "", "2"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            client.edit_event()
+            client.connection.edit_event.assert_not_called()
+            assert "\nNo fields to edit.\n" in terminal_output.getvalue()
+    
+    with patch("builtins.input", side_effect=["1", "a, b, c", "2"]):
+        with patch('sys.stdout', new = StringIO()) as terminal_output:
+            client.edit_event()
+            client.connection.edit_event.assert_not_called()
+            assert "\nNot inputted correctly!\n" in terminal_output.getvalue()
+
+
+"""Testing deleting event"""""
 def test_delete_event():
-    # TODO: FOR FINAL SUBMISSION
-    pass
+    client = CalendarClient(test=True)
+
+    # Setting up mocks
+    client.username = "alyssa"
+    client.connection = MagicMock()
+    client.connection.delete_event = MagicMock(return_value=MagicMock(text="Event deleted!"))
+    user_events = [MagicMock(id=1), MagicMock(text=2)]
+    client.connection.search_events = MagicMock(return_value=user_events)
+
+    # Test deleting event
+    with patch("builtins.input", side_effect=["1"]):
+        client.delete_event()
+
+        client.connection.delete_event.assert_called_once()
+        edited_event = client.connection.delete_event.call_args.args[0]
+        assert edited_event.id == 1
 
 
+"""Testing searching events"""""
 def test_search_events():
-    # TODO: FOR FINAL SUBMISSION
-    pass
+    client = CalendarClient(test=True)
+
+    # Setting up mocks
+    client.username = "alyssa"
+    client.connection = MagicMock()
+    client.connection.search_events = MagicMock()
+
+    # Test searching all events
+    client.search_events(display_all=True)
+    client.connection.search_events.assert_called_once()
+    args = client.connection.search_events.call_args.args[0]
+    assert args.function == SEARCH_ALL_EVENTS
+
+    # Test searching events by user
+    with patch("builtins.input", side_effect=["alyssa"]):
+        client.search_events(option=SEARCH_USER)
+        assert client.connection.search_events.call_count == 2
+        args = client.connection.search_events.call_args.args[0]
+        assert args.function == SEARCH_USER
+        assert args.value == "alyssa"
+
+    # Test searching events by description
+    with patch("builtins.input", side_effect=["description"]):
+        client.search_events(option=SEARCH_DESCRIPTION)
+        assert client.connection.search_events.call_count == 3
+        args = client.connection.search_events.call_args.args[0]
+        assert args.function == SEARCH_DESCRIPTION
+        assert args.value == "description"
