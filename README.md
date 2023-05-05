@@ -35,4 +35,4 @@ In the situation that all three servers are down, a new set of servers can be br
 
 ## Running Tests
 1. To run server tests, run `pytest server_tests.py`
-2. To run process tests, run `pytest process_tests.py`
+2. To run client tests, run `pytest client_tests.py`
