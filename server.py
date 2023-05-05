@@ -558,7 +558,6 @@ class CalendarServicer(proto_grpc.CalendarServicer):
             self.private_mappings[host].append(new_event.id)
             
             self.next_event_id += 1
-            mutex_events.release()
 
             # Update notifications for all invited accounts
             for user in guestlist.split(", "):
@@ -567,8 +566,12 @@ class CalendarServicer(proto_grpc.CalendarServicer):
                     self.new_event_notifications[user].append(new_event)
                     mutex_new_event_notifications.release()
             
+            mutex_events.release()
+            
         except Exception as e:
+            mutex_events.release()
             print("Error scheduling private event")
+            return
 
         # If leader, sync replicas
         if self.is_leader:    
@@ -634,6 +637,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         event_id = request.id
         new_event = Event(id=event_id, host=request.host, starttime=request.starttime, duration=request.duration, description=request.description)
         
+        mutex_events.acquire()
+
         # Check conflicts against all public events
         for event in self.public_events:
             if self.check_conflict(new_event, event) and event.id != event_id:
@@ -656,10 +661,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         
         for event in self.public_events:
             if event.id == event_id:
-                mutex_events.acquire()
                 event.starttime = request.starttime
                 event.duration = request.duration
                 event.description = request.description
+
                 mutex_events.release()
 
                 # If leader, sync replicas
@@ -688,10 +693,10 @@ class CalendarServicer(proto_grpc.CalendarServicer):
         
         for event in self.private_events:
             if event.id == event_id:
-                mutex_events.acquire()
                 event.starttime = request.starttime
                 event.duration = request.duration
                 event.description = request.description
+
                 mutex_events.release()
 
                 # If leader, sync replicas
@@ -717,7 +722,8 @@ class CalendarServicer(proto_grpc.CalendarServicer):
 
                 # Update other servers and then log
                 return proto.Text(text=UPDATE_SUCCESSFUL)
-            
+        
+        mutex_events.release()
         return proto.Text(text=ACTION_UNSUCCESSFUL)
     
 
